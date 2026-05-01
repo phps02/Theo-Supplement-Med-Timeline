@@ -85,6 +85,36 @@
   .lock-pill { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--gold); padding: 6px 12px; background: #fffbf0; border: 1px solid #e8d090; border-radius: 14px; cursor: pointer; }
   .lock-pill:hover { background: #fff8e0; }
   .lock-pill.unlocked { color: var(--moss); background: #e0ebda; border-color: #b8d4ad; }
+  /* Filter button group */
+  .filter-group {
+    max-width: 1300px; margin: 10px auto 0; padding: 0 32px;
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  }
+  .filter-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 0.2em; color: var(--ink-muted);
+    text-transform: uppercase; margin-right: 4px;
+  }
+  .filter-btn {
+    background: var(--paper); border: 1px solid var(--line); color: var(--ink-muted);
+    padding: 6px 12px; border-radius: 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { background: var(--bg-warm); color: var(--ink); }
+  .filter-btn.active {
+    background: var(--ink); color: var(--bg);
+    border-color: var(--ink);
+  }
+  .filter-count {
+    margin-left: 6px;
+    opacity: 0.7;
+    font-size: 9px;
+  }
+  @media (max-width: 640px) {
+    .filter-group { padding-left: 18px; padding-right: 18px; }
+  }
   .mini-nav { max-width: 1300px; margin: 14px auto 0; padding: 0 32px; }
   .mini-nav-inner { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; display: flex; gap: 2px; overflow-x: auto; }
   .mini-month { flex: 1; min-width: 50px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-muted); padding: 5px 2px; border-bottom: 2px solid transparent; cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase; user-select: none; border-radius: 2px; }
@@ -112,6 +142,26 @@
   .event-er:hover { transform: translate(-50%, -50%) scale(1.4); z-index: 20; }
   .supp-bar { position: absolute; top: 50%; transform: translateY(-50%); height: 16px; border-radius: 3px; cursor: pointer; border: 1px solid rgba(0,0,0,0.18); opacity: 0.85; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 6px; color: rgba(255,255,255,0.95); font-size: 10px; font-weight: 500; line-height: 14px; transition: opacity 0.15s, transform 0.15s; }
   .supp-bar:hover { opacity: 1; transform: translateY(-50%) scaleY(1.15); z-index: 10; }
+  /* Stopped supplements: crosshatched, faded base color */
+  .supp-bar.stopped {
+    opacity: 0.6;
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(255,255,255,0.35) 0px,
+      rgba(255,255,255,0.35) 1px,
+      transparent 1px,
+      transparent 5px
+    ), repeating-linear-gradient(
+      -45deg,
+      rgba(255,255,255,0.35) 0px,
+      rgba(255,255,255,0.35) 1px,
+      transparent 1px,
+      transparent 5px
+    );
+    color: rgba(255,255,255,0.85);
+  }
+  .supp-bar.stopped:hover { opacity: 0.85; }
+  .supp-bar.hidden-by-filter { display: none; }
   .experiment-band { position: absolute; top: 0; bottom: 0; background: rgba(184, 137, 42, 0.06); border-left: 1.5px dashed rgba(184, 137, 42, 0.4); border-right: 1.5px dashed rgba(184, 137, 42, 0.4); pointer-events: none; z-index: 1; }
   .legend { max-width: 1300px; margin: 12px auto 0; padding: 0 32px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 11px; color: var(--ink-muted); }
   .legend-item { display: flex; align-items: center; gap: 6px; }
@@ -199,6 +249,13 @@
   <button class="btn" onclick="openBulkImportModal()">⇪ Bulk Import</button>
   <button class="btn" onclick="reload()">↻ Refresh</button>
   <span class="lock-pill" id="lock-pill" onclick="toggleLock()">🔒 Read-only</span>
+</div>
+
+<div class="filter-group">
+  <span class="filter-label">Show supplements:</span>
+  <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All <span class="filter-count" id="count-all">—</span></button>
+  <button class="filter-btn" data-filter="active" onclick="setFilter('active')">Still taking <span class="filter-count" id="count-active">—</span></button>
+  <button class="filter-btn" data-filter="stopped" onclick="setFilter('stopped')">Stopped <span class="filter-count" id="count-stopped">—</span></button>
 </div>
 
 <div class="mini-nav"><div class="mini-nav-inner" id="mini-nav-inner"></div></div>
@@ -404,6 +461,7 @@ let editUnlocked = false;
 let lastActivityAt = Date.now();
 let editingSupp = null;
 let parsedBulkEvents = [];
+let suppFilter = 'all'; // 'all' | 'active' | 'stopped'
 
 function toast(msg, type) {
   const t = document.getElementById('toast');
@@ -575,6 +633,26 @@ function rebuildAll() {
   buildClusters();
 }
 
+function setFilter(filter) {
+  suppFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+  renderTimeline();
+}
+
+function updateFilterCounts() {
+  const total = SUPPLEMENTS.length;
+  const active = SUPPLEMENTS.filter(s => !s.end_date).length;
+  const stopped = total - active;
+  const allEl = document.getElementById('count-all');
+  const activeEl = document.getElementById('count-active');
+  const stoppedEl = document.getElementById('count-stopped');
+  if (allEl) allEl.textContent = `(${total})`;
+  if (activeEl) activeEl.textContent = `(${active})`;
+  if (stoppedEl) stoppedEl.textContent = `(${stopped})`;
+}
+
 function computeStats() {
   let streakDays = 0;
   let lastSeizureDate = null;
@@ -716,7 +794,12 @@ function renderTimeline() {
   const inner = document.createElement('div');
   inner.className = 'timeline-inner';
 
-  const groupsWithSupps = GROUP_ORDER.filter(g => SUPPLEMENTS.some(s => s.group === g));
+  // Apply filter
+  let filteredSupps = SUPPLEMENTS;
+  if (suppFilter === 'active') filteredSupps = SUPPLEMENTS.filter(s => !s.end_date);
+  else if (suppFilter === 'stopped') filteredSupps = SUPPLEMENTS.filter(s => !!s.end_date);
+
+  const groupsWithSupps = GROUP_ORDER.filter(g => filteredSupps.some(s => s.group === g));
 
   // Header row with month ticks
   const headerRow = document.createElement('div');
@@ -781,7 +864,7 @@ function renderTimeline() {
 
   // Supplement rows
   groupsWithSupps.forEach(groupName => {
-    const groupSupps = SUPPLEMENTS.filter(s => s.group === groupName);
+    const groupSupps = filteredSupps.filter(s => s.group === groupName);
     const subRows = packSupplements(groupSupps);
     subRows.forEach((subRow, subIdx) => {
       const row = document.createElement('div');
@@ -841,6 +924,7 @@ function renderSuppBar(supp, groupName) {
   const bar = document.createElement('div');
   bar.className = 'supp-bar';
   if (!supp.end_date) bar.classList.add('ongoing');
+  else bar.classList.add('stopped');
   const startPct = dateToPercent(supp.start_date);
   const endDate = supp.end_date || todayISO();
   const endPct = dateToPercent(endDate);
@@ -1210,6 +1294,7 @@ async function reload() {
   rebuildAll();
   computeTimelineRange();
   computeStats();
+  updateFilterCounts();
   renderMiniNav();
   renderTimeline();
 }
