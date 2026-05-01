@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seizure & Supplement Timeline</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap');
+
+:root {
+  --bg:        #f5f2ee;
+  --surface:   #ffffff;
+  --border:    #ddd9d2;
+  --border2:   #c8c3ba;
+  --text:      #2a2620;
+  --muted:     #8c8680;
+  --muted2:    #b5b0aa;
+  --seizure:   #c0392b;
+  --cluster:   #e74c3c;
+  --er:        #e67e22;
+  --gap-good:  #27ae60;
+  --gap-mid:   #d4a017;
+  --gap-bad:   #c0392b;
+  --label-w:   176px;
+  --row-h:     28px;
+  --hdr-h:     48px;
+  --ctrl-h:    52px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  min-height: 100vh;
+}
+
+/* ── Page header ── */
+.page-header {
+  padding: 28px 28px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: clamp(18px, 3vw, 28px);
+  color: var(--text);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+h1 em { font-style: italic; color: var(--seizure); }
+.subtitle {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  margin-top: 5px;
+}
+
+/* ── Controls ── */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  padding: 10px 28px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.ctrl-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.zoom-btn {
+  width: 28px; height: 28px;
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s, border-color 0.12s;
+  font-family: 'DM Mono', monospace;
+  line-height: 1;
+}
+.zoom-btn:hover { background: var(--border); border-color: var(--border2); }
+.zoom-val {
+  font-size: 11px;
+  min-width: 38px;
+  text-align: center;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+}
+.zoom-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 140px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  outline: none;
+  cursor: pointer;
+}
+.zoom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--text);
+  cursor: pointer;
+  border: 2px solid var(--surface);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.reset-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 10px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.05em;
+  transition: background 0.12s;
+}
+.reset-btn:hover { background: var(--border); color: var(--text); }
+
+.filter-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 10px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.05em;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.filter-btn:hover { background: var(--border); color: var(--text); }
+.filter-btn.active {
+  background: var(--text);
+  color: var(--surface);
+  border-color: var(--text);
+}
+
+.ctrl-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+
+.scroll-hint {
+  font-size: 10px;
+  color: var(--muted2);
+  letter-spacing: 0.04em;
+  margin-left: auto;
+}
+
+/* ── Legend ── */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 10px 28px;
+  border-bottom: 1px solid var(--border);
+  background: #faf8f5;
+}
+.li { display:flex; align-items:center; gap:6px; font-size:10px; color:var(--muted); }
+.li-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.li-bar { width:20px; height:6px; border-radius:2px; flex-shrink:0; }
+.li-diamond { width:8px; height:8px; transform:rotate(45deg); border-radius:1px; flex-shrink:0; }
+
+/* ── Chart area ── */
+.chart-outer {
+  overflow-x: auto;
+  overflow-y: auto;
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  max-height: calc(100vh - 200px);
+}
+.chart-outer.grabbing { cursor: grabbing; }
+.chart-outer::-webkit-scrollbar { width:6px; height:6px; }
+.chart-outer::-webkit-scrollbar-track { background: var(--bg); }
+.chart-outer::-webkit-scrollbar-thumb { background: var(--border2); border-radius:3px; }
+
+/* frozen label column */
+.chart-wrapper {
+  position: relative;
+  display: flex;
+}
+.label-col {
+  position: sticky;
+  left: 0;
+  z-index: 20;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 2px solid var(--border2);
+  width: var(--label-w);
+}
+.chart-canvas-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* tooltip */
+.tooltip {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--text);
+  pointer-events: none;
+  z-index: 200;
+  max-width: 240px;
+  line-height: 1.6;
+  display: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+.tooltip strong {
+  color: var(--text);
+  display: block;
+  margin-bottom: 2px;
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 12px;
+}
+.tooltip .tt-muted { color: var(--muted); font-size: 10px; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <h1>Supplement &amp; <em>Seizure</em> Timeline</h1>
+    <p class="subtitle">July 2025 – April 2026 · Hover markers for details</p>
+  </div>
+</div>
+
+<div class="controls">
+  <span class="ctrl-label">Zoom</span>
+  <button class="zoom-btn" id="zoomOut">−</button>
+  <input type="range" class="zoom-slider" id="zoomSlider" min="0.5" max="5" step="0.1" value="1">
+  <button class="zoom-btn" id="zoomIn">+</button>
+  <span class="zoom-val" id="zoomVal">100%</span>
+  <div class="ctrl-sep"></div>
+  <button class="reset-btn" id="resetBtn">Reset</button>
+  <div class="ctrl-sep"></div>
+  <span class="ctrl-label">Show</span>
+  <button class="filter-btn active" id="filterAll" data-filter="all">All</button>
+  <button class="filter-btn" id="filterActive" data-filter="active">Still taking</button>
+  <button class="filter-btn" id="filterStopped" data-filter="stopped">Stopped</button>
+  <span class="scroll-hint">Scroll to pan · Pinch or slider to zoom</span>
+</div>
+
+<div class="legend">
+  <div class="li"><div class="li-dot" style="background:var(--seizure)"></div>Seizure</div>
+  <div class="li"><div class="li-diamond" style="background:var(--cluster)"></div>Cluster</div>
+  <div class="li">
+    <svg width="11" height="10" viewBox="0 0 11 10" style="flex-shrink:0"><polygon points="5.5,0 11,10 0,10" fill="var(--er)"/></svg>
+    ER visit
+  </div>
+  <div class="li"><div class="li-bar" style="background:#5b7fa6;opacity:0.9"></div>Active supplement</div>
+  <div class="li">
+    <svg width="22" height="10" viewBox="0 0 22 10" style="flex-shrink:0">
+      <defs>
+        <pattern id="hatch-legend" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="4" stroke="#999" stroke-width="1"/>
+        </pattern>
+        <clipPath id="bar-clip-legend"><rect x="0" y="0" width="22" height="10" rx="3"/></clipPath>
+      </defs>
+      <rect x="0" y="0" width="22" height="10" rx="3" fill="#bbb" opacity="0.18"/>
+      <rect x="0" y="0" width="22" height="10" rx="3" fill="url(#hatch-legend)" opacity="0.6" clip-path="url(#bar-clip-legend)"/>
+      <rect x="0" y="0" width="22" height="10" rx="3" fill="none" stroke="#999" stroke-width="1" opacity="0.45"/>
+    </svg>
+    <span style="margin-left:2px">Stopped</span>
+    <svg width="14" height="14" viewBox="0 0 14 14" style="margin-left:2px;flex-shrink:0"><circle cx="7" cy="7" r="6" fill="rgba(100,100,100,0.1)" stroke="#999" stroke-width="0.8"/><line x1="4" y1="4" x2="10" y2="10" stroke="#888" stroke-width="1.8" stroke-linecap="round"/><line x1="10" y1="4" x2="4" y2="10" stroke="#888" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </div>
+  <div class="li"><div class="li-bar" style="background:var(--gap-good);opacity:0.18;outline:1px solid var(--gap-good)"></div>Long gap ≥40d</div>
+  <div class="li"><div class="li-bar" style="background:var(--gap-mid);opacity:0.18;outline:1px solid var(--gap-mid)"></div>Med gap 25–39d</div>
+  <div class="li"><div class="li-bar" style="background:var(--gap-bad);opacity:0.18;outline:1px solid var(--gap-bad)"></div>Short gap &lt;25d</div>
+</div>
+
+<div class="chart-outer" id="chartOuter">
+  <div class="chart-wrapper" id="chartWrapper">
+    <div class="label-col" id="labelCol"></div>
+    <div class="chart-canvas-wrap" id="canvasWrap">
+      <canvas id="mainCanvas"></canvas>
+      <div id="hitLayer" style="position:absolute;top:0;left:0;pointer-events:none;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────
+const START_D = parseDate('2025-07-01');
+const END_D   = parseDate('2026-04-21');
+const SPAN    = END_D - START_D;
+
+// Parse YYYY-MM-DD as local time (avoids UTC midnight → day-behind timezone shift)
+function parseDate(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function datePx(dateStr, chartW) {
+  return ((parseDate(dateStr) - START_D) / SPAN) * chartW;
+}
+function fmtDate(dateStr) {
+  return parseDate(dateStr).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'});
+}
+
+const seizures = [
+  { date:'2025-07-15', type:'sz',  label:'Seizure — Jul 15',      note:'2 seizures, 10:00–14:00 (4h span)' },
+  { date:'2025-09-02', type:'sz',  label:'Seizure — Sep 2',       note:'Single event, 13:00. CBD Heal, MCT Oil, B6 added after.' },
+  { date:'2025-09-25', type:'cl',  label:'Cluster — Sep 25–27',   note:'Sep 25 23:44 → Sep 27 06:15 (51.3h span). SP Canine Thy Support stopped; Hemp EO & Vit C added; CBD Heal stopped after.' },
+  { date:'2025-09-26', type:'cl',  label:'Cluster — Sep 25–27',   note:'Sep 25 23:44 → Sep 27 06:15 (51.3h span).' },
+  { date:'2025-09-27', type:'er',  label:'ER — Sep 27',           note:'Last seizure 06:15. First ER, rescue meds. Hemp EO & Vit C added; CBD Heal stopped after.' },
+  { date:'2025-12-19', type:'sz',  label:'Seizure — Dec 19',      note:'Single event, 06:00. 83-day gap. Krill oil & Gussy\'s Gut Sustain added after.' },
+  { date:'2026-01-11', type:'sz',  label:'Seizure — Jan 11',      note:'Single event, 15:30. 23-day gap. Gussy\'s Gut Sustain stopped after.' },
+  { date:'2026-02-05', type:'cl',  label:'Cluster — Feb 5',       note:'3 seizures, 08:00–19:50 (12h span). 25-day gap. Lion\'s Mane, Mg Glycinate, B6, B Complex, Taurine added; Brahmi stopped after.' },
+  { date:'2026-03-17', type:'cl',  label:'Cluster — Mar 17',      note:'4 seizures, 10:50–22:00 (11h span). 40-day gap. TCVM started; PEA started then stopped ~Mar 24 after.' },
+];
+
+const gaps = [
+  { from:'2025-07-15', to:'2025-09-02', days:49, color:'#27ae60', note:'Stable protocol building' },
+  { from:'2025-09-02', to:'2025-09-25', days:23, color:'#c0392b', note:'CBD/MCT/B6 added at start' },
+  { from:'2025-09-27', to:'2025-12-19', days:83, color:'#27ae60', note:'★ Longest gap — stable protocol' },
+  { from:'2025-12-19', to:'2026-01-11', days:23, color:'#c0392b', note:'Krill/gut added after Dec seizure' },
+  { from:'2026-01-11', to:'2026-02-05', days:25, color:'#c0392b', note:'New gut+neuro stack building' },
+  { from:'2026-02-05', to:'2026-03-17', days:40, color:'#d4a017', note:'Improving trend' },
+  { from:'2026-03-17', to:'2026-04-21', days:35, color:'#d4a017', note:'Ongoing — TCVM active', ongoing:true },
+];
+
+const GROUPS = [
+  { label:'AED',              color:'#3a5a8a' },
+  { label:'Hormonal',         color:'#a0522d' },
+  { label:'Neuro / Brain',    color:'#6a3d7a' },
+  { label:'CBD / Cannabinoid',color:'#2d7a4a' },
+  { label:'Gut',              color:'#8a6a00' },
+  { label:'Other',            color:'#7a3030' },
+];
+
+const supps = [
+  // AED
+  { name:'Keppra 750mg',        start:'2025-07-15', end:null,         color:'#4e6fa3', group:'AED',
+    note:'750mg × 2 tabs, twice daily. Core AED throughout.' },
+
+  // Hormonal
+  { name:'Liothyronine 5mg',    start:'2025-08-02', end:'2025-10-16', color:'#b5651d', group:'Hormonal',
+    note:'Stopped after Oct 16 (between seizures).' },
+  { name:'SP Canine Thy Sup.',  start:'2025-08-21', end:'2025-09-25', color:'#cd8540', group:'Hormonal',
+    note:'Stopped after Sep 25 seizure.' },
+
+  // Neuro / Brain
+  { name:'Calming Care',        start:'2025-08-07', end:'2025-11-09', color:'#8e6aaa', group:'Neuro / Brain',
+    note:'Stopped Nov 9.' },
+  { name:'DHA (6 caps)',        start:'2025-08-17', end:null,         color:'#6a9aaa', group:'Neuro / Brain' },
+  { name:'SP Neuroplex',        start:'2025-08-21', end:null,         color:'#7b5ea0', group:'Neuro / Brain' },
+  { name:'Mycodog Clarity',     start:'2025-08-21', end:null,         color:'#9b6fc0', group:'Neuro / Brain',
+    note:'Continuous since Aug 21. Lion\'s Mane trialed Feb 5–12, then returned to Mycodog.' },
+  { name:'B6',                  start:'2025-09-02', end:null,         color:'#5a8aaa', group:'Neuro / Brain',
+    note:'Added after Seizure #2.' },
+  { name:'Brahmi',              start:'2026-01-18', end:'2026-02-05', color:'#4a9aaa', group:'Neuro / Brain',
+    note:'Stopped after Feb 5 seizure.' },
+  { name:"Lion's Mane",         start:'2026-02-05', end:'2026-02-12', color:'#3d8a9a', group:'Neuro / Brain',
+    note:'Added after Feb 5 seizure; stopped Feb 12 — back to Mycodog Clarity.' },
+  { name:'Mg Glycinate 50mg',   start:'2026-02-05', end:null,         color:'#2d7a8a', group:'Neuro / Brain',
+    note:'Added after Feb 5 seizure.' },
+  { name:'Taurine',             start:'2026-02-05', end:null,         color:'#4a6a8a', group:'Neuro / Brain',
+    note:'Added after Feb 5 seizure.' },
+  { name:'B Complex',           start:'2026-02-05', end:null,         color:'#5a7aaa', group:'Neuro / Brain',
+    note:'Added after Feb 5 seizure.' },
+
+  // CBD / Cannabinoid
+  { name:'CBD Heal',            start:'2025-09-02', end:'2025-09-27', color:'#5a9a6a', group:'CBD / Cannabinoid',
+    note:'Stopped after ER visit Sep 27.' },
+  { name:'MCT Oil',             start:'2025-09-02', end:null,         color:'#4a8a5a', group:'CBD / Cannabinoid',
+    note:'Added after Seizure #2.' },
+  { name:'Hemp EO',             start:'2025-09-27', end:'2026-01-19', color:'#6aaa5a', group:'CBD / Cannabinoid',
+    note:'Added after ER visit. Stopped when Ellevet CBD started Jan 19.' },
+  { name:'Ellevet CBD',         start:'2026-01-19', end:null,         color:'#3a7a4a', group:'CBD / Cannabinoid',
+    note:'Started Jan 19; replaced CBD Heal.' },
+
+  // Gut
+  { name:'FMT',                 start:'2025-08-21', end:'2026-01-11', color:'#aa8800', group:'Gut',
+    note:'Course completed after Jan 11 seizure.' },
+  { name:'Krill Oil',           start:'2025-12-19', end:'2026-01-08', color:'#9a7a00', group:'Gut',
+    note:'Added after Dec 19 seizure; stopped after ~20 days.' },
+  { name:"Gussy's Gut Sustain", start:'2025-12-19', end:'2026-01-11', color:'#ba9a10', group:'Gut',
+    note:'Stopped after Jan 11 seizure.' },
+  { name:'AB Healthy Gut',      start:'2026-01-13', end:null,         color:'#8a6a10', group:'Gut',
+    note:'Added Jan 13 post-seizure.' },
+
+  // Other
+  { name:'Vitamin C',           start:'2025-09-27', end:null,         color:'#8a4040', group:'Other',
+    note:'Added after ER visit Sep 27.' },
+  { name:'PEA',                 start:'2026-03-17', end:'2026-03-24', color:'#9a3535', group:'Other',
+    note:'Started after Mar 17 seizure; stopped ~Mar 24.' },
+  { name:'TCVM',                start:'2026-03-17', end:null,         color:'#7a3535', group:'Other',
+    note:'Started after Mar 17 seizure. Ongoing.' },
+];
+
+// ── Layout constants ──────────────────────────────────────────────────────
+const LABEL_W = 176;
+const ROW_H   = 28;
+const HDR_H   = 48;
+const BASE_W  = 900; // base chart content width at zoom=1
+let zoom = 1;
+let suppFilter = 'all'; // 'all' | 'active' | 'stopped'
+
+function buildRows() {
+  const rows = [];
+  rows.push({ type:'section', label:'Seizures & ER', color:'#c0392b' });
+  rows.push({ type:'seizure' });
+  rows.push({ type:'gap' });
+
+  GROUPS.forEach(g => {
+    const gs = supps.filter(s => {
+      if (s.group !== g.label) return false;
+      if (suppFilter === 'active')  return !s.end;
+      if (suppFilter === 'stopped') return !!s.end;
+      return true;
+    });
+    if (!gs.length) return;
+    rows.push({ type:'section', label: g.label, color: g.color });
+    gs.forEach(s => rows.push({ type:'supp', data: s }));
+    rows.push({ type:'gap' });
+  });
+  return rows;
+}
+
+let rows = buildRows();
+
+const SZ_ROW_H = 44; // taller to fit date label + marker
+
+function totalHeight() {
+  let h = HDR_H;
+  rows.forEach(r => {
+    if (r.type === 'gap') h += 6;
+    else if (r.type === 'seizure') h += SZ_ROW_H;
+    else h += ROW_H;
+  });
+  return h;
+}
+
+function rowY(idx) {
+  let y = HDR_H;
+  for (let i = 0; i < idx; i++) {
+    if (rows[i].type === 'gap') y += 6;
+    else if (rows[i].type === 'seizure') y += SZ_ROW_H;
+    else y += ROW_H;
+  }
+  return y;
+}
+
+// ── Canvas rendering ───────────────────────────────────────────────────────
+const canvas  = document.getElementById('mainCanvas');
+const ctx     = canvas.getContext('2d');
+const labelCol    = document.getElementById('labelCol');
+const canvasWrap  = document.getElementById('canvasWrap');
+const hitLayer    = document.getElementById('hitLayer');
+const chartOuter  = document.getElementById('chartOuter');
+
+function chartW() { return BASE_W * zoom; }
+
+function render() {
+  const cw = chartW();
+  const ch = totalHeight();
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width  = cw * dpr;
+  canvas.height = ch * dpr;
+  canvas.style.width  = cw + 'px';
+  canvas.style.height = ch + 'px';
+  ctx.scale(dpr, dpr);
+
+  canvasWrap.style.width  = cw + 'px';
+  canvasWrap.style.height = ch + 'px';
+  hitLayer.style.width    = cw + 'px';
+  hitLayer.style.height   = ch + 'px';
+
+  // clear
+  ctx.clearRect(0, 0, cw, ch);
+
+  // background
+  ctx.fillStyle = '#f5f2ee';
+  ctx.fillRect(0, 0, cw, ch);
+
+  // month grid & header
+  drawMonthHeader(cw, ch);
+
+  // rows
+  rows.forEach((row, i) => {
+    const y = rowY(i);
+    if (row.type === 'section') drawSectionRow(row, y, cw);
+    else if (row.type === 'supp') drawSuppRow(row, y, cw);
+    else if (row.type === 'seizure') drawSeizureRow(y, cw);
+    // gap rows: nothing drawn on canvas
+  });
+
+  // seizure vertical lines (across all rows) — bold and clear
+  seizures.forEach(s => {
+    const x = datePx(s.date, cw);
+    const color = s.type === 'sz' ? '#c0392b' : s.type === 'cl' ? '#e74c3c' : '#e67e22';
+    ctx.save();
+    // soft glow pass
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = 0.12;
+    ctx.lineWidth = 5;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(x, HDR_H);
+    ctx.lineTo(x, ch);
+    ctx.stroke();
+    // solid line on top
+    ctx.globalAlpha = 0.55;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, HDR_H);
+    ctx.lineTo(x, ch);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // today line
+  const todayX = datePx('2026-04-21', cw);
+  ctx.save();
+  ctx.strokeStyle = '#aaa';
+  ctx.globalAlpha = 0.5;
+  ctx.setLineDash([3, 4]);
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(todayX, 0); ctx.lineTo(todayX, ch); ctx.stroke();
+  ctx.globalAlpha = 0.5;
+  ctx.font = '8px "DM Mono"';
+  ctx.fillStyle = '#999';
+  ctx.setLineDash([]);
+  ctx.fillText('TODAY', todayX - 28, 12);
+  ctx.restore();
+
+  buildLabels(ch);
+  buildHitAreas(cw, ch);
+}
+
+function drawMonthHeader(cw, ch) {
+  // header bg
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, cw, HDR_H);
+  ctx.fillStyle = '#e8e4de';
+  ctx.fillRect(0, HDR_H - 1, cw, 1);
+
+  const months = [];
+  let cm = new Date(START_D);
+  while (cm <= END_D) { months.push(new Date(cm)); cm = new Date(cm.getFullYear(), cm.getMonth()+1, 1); }
+
+  months.forEach(m => {
+    const x = datePx(`${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}-${String(m.getDate()).padStart(2,'0')}`, cw);
+    // vertical grid line
+    ctx.strokeStyle = '#ddd9d2';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(x, HDR_H); ctx.lineTo(x, ch); ctx.stroke();
+
+    // tick
+    ctx.strokeStyle = '#c8c3ba';
+    ctx.beginPath(); ctx.moveTo(x, HDR_H - 8); ctx.lineTo(x, HDR_H); ctx.stroke();
+
+    // label
+    ctx.fillStyle = '#8c8680';
+    ctx.font = '9px "DM Mono"';
+    ctx.fillText(
+      m.toLocaleDateString('en-US',{month:'short',year:'2-digit'}).toUpperCase(),
+      x + 5, HDR_H - 16
+    );
+  });
+}
+
+function drawSectionRow(row, y, cw) {
+  // tinted bg
+  ctx.fillStyle = row.color;
+  ctx.globalAlpha = 0.06;
+  ctx.fillRect(0, y, cw, ROW_H);
+  ctx.globalAlpha = 1;
+
+  // label text on canvas (right side of row — in chart area)
+  ctx.fillStyle = row.color;
+  ctx.font = '9px "DM Mono"';
+  ctx.globalAlpha = 0.7;
+  ctx.fillText(row.label.toUpperCase(), 6, y + ROW_H/2 + 3);
+  ctx.globalAlpha = 1;
+
+  // bottom border
+  ctx.strokeStyle = '#ddd9d2';
+  ctx.lineWidth = 0.5;
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(0, y + ROW_H); ctx.lineTo(cw, y + ROW_H); ctx.stroke();
+}
+
+function drawSeizureRow(y, cw) {
+  // gap bands
+  gaps.forEach(g => {
+    const x1 = datePx(g.from, cw);
+    const x2 = g.ongoing ? cw : datePx(g.to, cw);
+    ctx.fillStyle = g.color;
+    ctx.globalAlpha = 0.08;
+    ctx.fillRect(x1, y, x2-x1, SZ_ROW_H);
+    ctx.globalAlpha = 1;
+
+    // gap label at bottom of row
+    const mid = x1 + (x2-x1)/2;
+    ctx.fillStyle = g.color;
+    ctx.font = `bold 9px "DM Mono"`;
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = 0.8;
+    ctx.fillText(g.ongoing ? `${g.days}d+` : `${g.days}d`, mid, y + SZ_ROW_H - 5);
+    ctx.textAlign = 'left';
+    ctx.globalAlpha = 1;
+  });
+
+  // seizure markers drawn on canvas + date labels above
+  seizures.forEach(s => {
+    const x = datePx(s.date, cw);
+    const cy = y + SZ_ROW_H * 0.62; // marker sits in lower 2/3 to leave room for label
+    drawMarker(ctx, x, cy, s.type);
+
+    // date label above marker
+    const color = s.type === 'sz' ? '#c0392b' : s.type === 'cl' ? '#e74c3c' : '#e67e22';
+    const d = parseDate(s.date);
+    const lbl = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    ctx.save();
+    ctx.font = 'bold 8px "DM Mono"';
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.85;
+    ctx.textAlign = 'center';
+    ctx.fillText(lbl, x, y + 11);
+    ctx.restore();
+  });
+
+  // row border
+  ctx.strokeStyle = '#ddd9d2';
+  ctx.lineWidth = 0.5;
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(0, y + SZ_ROW_H); ctx.lineTo(cw, y + SZ_ROW_H); ctx.stroke();
+}
+
+function drawMarker(ctx, x, cy, type) {
+  ctx.save();
+  if (type === 'sz') {
+    ctx.beginPath();
+    ctx.arc(x, cy, 6, 0, Math.PI*2);
+    ctx.fillStyle = '#c0392b';
+    ctx.shadowColor = '#c0392b';
+    ctx.shadowBlur = 6;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  } else if (type === 'cl') {
+    ctx.translate(x, cy);
+    ctx.rotate(Math.PI/4);
+    ctx.fillStyle = '#e74c3c';
+    ctx.shadowColor = '#e74c3c';
+    ctx.shadowBlur = 5;
+    ctx.beginPath();
+    ctx.roundRect(-5, -5, 10, 10, 1.5);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = '#e67e22';
+    ctx.shadowColor = '#e67e22';
+    ctx.shadowBlur = 5;
+    ctx.beginPath();
+    ctx.moveTo(x, cy-8);
+    ctx.lineTo(x+8, cy+6);
+    ctx.lineTo(x-8, cy+6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawSuppRow(row, y, cw) {
+  const s = row.data;
+  const x1 = datePx(s.start, cw);
+  const endDate = s.end || '2026-04-21';
+  const x2 = datePx(endDate, cw);
+  const barH = 10;
+  const barY = y + ROW_H/2 - barH/2;
+  const isOngoing = !s.end;
+
+  // alternating row bg
+  ctx.fillStyle = '#f0ede8';
+  ctx.globalAlpha = 0.0;
+  ctx.fillRect(0, y, cw, ROW_H);
+  ctx.globalAlpha = 1;
+
+  // bar
+  const r = barH/2;
+  // helper: draw the rounded bar path
+  function barPath() {
+    ctx.beginPath();
+    ctx.moveTo(x1 + r, barY);
+    ctx.arcTo(x2, barY,    x2, barY+barH, isOngoing ? r : 2);
+    ctx.arcTo(x2, barY+barH, x1, barY+barH, isOngoing ? r : 2);
+    ctx.arcTo(x1, barY+barH, x1, barY,    r);
+    ctx.arcTo(x1, barY,    x2, barY,    r);
+    ctx.closePath();
+  }
+
+  if (isOngoing) {
+    // solid fill for active supplements
+    ctx.save();
+    ctx.fillStyle = s.color;
+    ctx.globalAlpha = 0.85;
+    barPath();
+    ctx.fill();
+    ctx.restore();
+  } else {
+    // stopped: faint solid base + crosshatch overlay
+    // 1. faint solid base
+    ctx.save();
+    ctx.fillStyle = s.color;
+    ctx.globalAlpha = 0.18;
+    barPath();
+    ctx.fill();
+    ctx.restore();
+
+    // 2. crosshatch lines clipped to bar shape
+    ctx.save();
+    barPath();
+    ctx.clip();
+    ctx.strokeStyle = s.color;
+    ctx.globalAlpha = 0.55;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    const spacing = 4;
+    const diagSpan = (x2 - x1) + barH * 2;
+    // diagonal lines top-left → bottom-right
+    for (let d = -barH; d <= (x2 - x1) + barH; d += spacing) {
+      ctx.beginPath();
+      ctx.moveTo(x1 + d,         barY);
+      ctx.lineTo(x1 + d + barH,  barY + barH);
+      ctx.stroke();
+    }
+    // diagonal lines top-right → bottom-left
+    for (let d = -barH; d <= (x2 - x1) + barH; d += spacing) {
+      ctx.beginPath();
+      ctx.moveTo(x1 + d + barH,  barY);
+      ctx.lineTo(x1 + d,         barY + barH);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 3. outline stroke
+    ctx.save();
+    ctx.strokeStyle = s.color;
+    ctx.globalAlpha = 0.45;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    barPath();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // X cross marker at stop date
+  if (!isOngoing) {
+    const cx = x2;
+    const cy2 = y + ROW_H / 2;
+    const arm = 5.5;
+
+    // white knockout halo for legibility over bar
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy2, arm + 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#f5f2ee';
+    ctx.globalAlpha = 0.85;
+    ctx.fill();
+    ctx.restore();
+
+    // tinted circle bg
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy2, arm + 2, 0, Math.PI * 2);
+    ctx.fillStyle = s.color;
+    ctx.globalAlpha = 0.12;
+    ctx.fill();
+    // circle outline
+    ctx.strokeStyle = s.color;
+    ctx.globalAlpha = 0.35;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.stroke();
+    ctx.restore();
+
+    // X strokes
+    ctx.save();
+    ctx.strokeStyle = s.color;
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(cx - arm + 1.5, cy2 - arm + 1.5);
+    ctx.lineTo(cx + arm - 1.5, cy2 + arm - 1.5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + arm - 1.5, cy2 - arm + 1.5);
+    ctx.lineTo(cx - arm + 1.5, cy2 + arm - 1.5);
+    ctx.stroke();
+    ctx.restore();
+  } else {
+    // glow end
+    ctx.save();
+    ctx.fillStyle = s.color;
+    ctx.globalAlpha = 0.2;
+    ctx.beginPath();
+    ctx.arc(x2, y + ROW_H/2, barH, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // start dot
+  ctx.beginPath();
+  ctx.arc(x1, y + ROW_H/2, 3.5, 0, Math.PI*2);
+  ctx.fillStyle = s.color;
+  ctx.globalAlpha = isOngoing ? 1 : 0.6;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // row separator
+  ctx.strokeStyle = '#e8e4de';
+  ctx.lineWidth = 0.5;
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(0, y + ROW_H); ctx.lineTo(cw, y + ROW_H); ctx.stroke();
+}
+
+// ── Label column (DOM, frozen) ─────────────────────────────────────────────
+function buildLabels(ch) {
+  labelCol.innerHTML = '';
+  labelCol.style.height = ch + 'px';
+
+  // header cell
+  const hdr = document.createElement('div');
+  hdr.style.cssText = `height:${HDR_H}px; border-bottom:1px solid #ddd9d2; background:#fff; display:flex; align-items:flex-end; padding:0 10px 8px; font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:#b5b0aa;`;
+  hdr.textContent = 'Supplement';
+  labelCol.appendChild(hdr);
+
+  rows.forEach((row, i) => {
+    const y = rowY(i) - HDR_H;
+    const h = row.type === 'gap' ? 6 : row.type === 'seizure' ? SZ_ROW_H : ROW_H;
+    const el = document.createElement('div');
+    el.style.cssText = `height:${h}px; display:flex; align-items:center; padding-right:12px; justify-content:flex-end;`;
+
+    if (row.type === 'section') {
+      el.style.background = hexToRgba(row.color, 0.06);
+      el.style.borderBottom = '1px solid #ddd9d2';
+      const t = document.createElement('span');
+      t.style.cssText = `font-size:9px; letter-spacing:0.09em; text-transform:uppercase; color:${row.color}; opacity:0.75;`;
+      t.textContent = row.label;
+      el.appendChild(t);
+    } else if (row.type === 'supp') {
+      el.style.borderBottom = '1px solid #e8e4de';
+      const t = document.createElement('span');
+      t.style.cssText = `font-size:11px; color:#2a2620; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:${LABEL_W-14}px; display:block; text-align:right;`;
+      t.textContent = row.data.name;
+      t.title = row.data.name;
+      el.appendChild(t);
+    } else if (row.type === 'seizure') {
+      el.style.borderBottom = '1px solid #ddd9d2';
+      const t = document.createElement('span');
+      t.style.cssText = `font-size:9px; letter-spacing:0.05em; text-transform:uppercase; color:#8c8680;`;
+      t.textContent = 'Events';
+      el.appendChild(t);
+    }
+
+    labelCol.appendChild(el);
+  });
+}
+
+// ── Hit areas (tooltips for markers and bars) ──────────────────────────────
+function buildHitAreas(cw, ch) {
+  hitLayer.innerHTML = '';
+  hitLayer.style.pointerEvents = 'auto';
+
+  const szRowIdx = rows.findIndex(r => r.type === 'seizure');
+  const szY = rowY(szRowIdx);
+
+  // seizure marker hits
+  seizures.forEach(s => {
+    const x = datePx(s.date, cw);
+    const size = 20;
+    const div = document.createElement('div');
+    div.style.cssText = `position:absolute; left:${x - size/2}px; top:${szY + SZ_ROW_H * 0.62 - size/2}px; width:${size}px; height:${size}px; cursor:pointer; border-radius:50%;`;
+    const ttHtml = `<strong>${s.label}</strong>${fmtDate(s.date)}${s.note ? `<br><span class="tt-muted">${s.note}</span>` : ''}`;
+    div.addEventListener('mouseenter', e => showTT(e, ttHtml));
+    div.addEventListener('mousemove', moveTT);
+    div.addEventListener('mouseleave', hideTT);
+    hitLayer.appendChild(div);
+  });
+
+  // supplement bar hits
+  rows.forEach((row, i) => {
+    if (row.type !== 'supp') return;
+    const s = row.data;
+    const y = rowY(i);
+    const x1 = datePx(s.start, cw);
+    const x2 = datePx(s.end || '2026-04-21', cw);
+    const div = document.createElement('div');
+    div.style.cssText = `position:absolute; left:${x1}px; top:${y+4}px; width:${x2-x1}px; height:${ROW_H-8}px; cursor:default;`;
+    const ttHtml = `<strong>${s.name}</strong>Start: ${fmtDate(s.start)}<br>End: ${s.end ? fmtDate(s.end)+' (stopped)' : 'Ongoing'}${s.note ? `<br><span class="tt-muted">${s.note}</span>` : ''}`;
+    div.addEventListener('mouseenter', e => showTT(e, ttHtml));
+    div.addEventListener('mousemove', moveTT);
+    div.addEventListener('mouseleave', hideTT);
+    hitLayer.appendChild(div);
+  });
+}
+
+// ── Tooltip ───────────────────────────────────────────────────────────────
+const tooltip = document.getElementById('tooltip');
+function showTT(e, html) { tooltip.innerHTML = html; tooltip.style.display = 'block'; moveTT(e); }
+function moveTT(e) {
+  const x = e.clientX + 14;
+  const y = e.clientY - 10;
+  tooltip.style.left = Math.min(x, window.innerWidth - 260) + 'px';
+  tooltip.style.top  = Math.max(y, 10) + 'px';
+}
+function hideTT() { tooltip.style.display = 'none'; }
+
+// ── Zoom controls ─────────────────────────────────────────────────────────
+const zoomSlider = document.getElementById('zoomSlider');
+const zoomVal    = document.getElementById('zoomVal');
+
+function setZoom(z, pivotX) {
+  const outer = chartOuter;
+  // preserve scroll ratio around pivot
+  const scrollLeft = outer.scrollLeft;
+  const visibleLeft = scrollLeft;
+  const ratio = pivotX !== undefined
+    ? (pivotX + scrollLeft) / chartW()
+    : (scrollLeft + outer.clientWidth/2) / chartW();
+
+  zoom = Math.max(0.5, Math.min(5, z));
+  zoomSlider.value = zoom;
+  zoomVal.textContent = Math.round(zoom * 100) + '%';
+  render();
+
+  // restore scroll position centered on pivot
+  outer.scrollLeft = ratio * chartW() - (pivotX !== undefined ? pivotX : outer.clientWidth/2);
+}
+
+document.getElementById('zoomIn').addEventListener('click', () => setZoom(zoom + 0.25));
+document.getElementById('zoomOut').addEventListener('click', () => setZoom(zoom - 0.25));
+document.getElementById('resetBtn').addEventListener('click', () => setZoom(1));
+zoomSlider.addEventListener('input', () => setZoom(parseFloat(zoomSlider.value)));
+
+// wheel zoom
+chartOuter.addEventListener('wheel', e => {
+  if (e.ctrlKey || e.metaKey || Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const rect = chartOuter.getBoundingClientRect();
+      const pivotX = e.clientX - rect.left - LABEL_W;
+      const delta = e.deltaY > 0 ? -0.15 : 0.15;
+      setZoom(zoom + delta, Math.max(0, pivotX));
+    }
+  }
+}, { passive: false });
+
+// pinch zoom
+let lastPinchDist = null;
+chartOuter.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    lastPinchDist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+  }
+}, { passive: true });
+chartOuter.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && lastPinchDist !== null) {
+    const dist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    setZoom(zoom * (dist / lastPinchDist));
+    lastPinchDist = dist;
+  }
+}, { passive: true });
+
+// drag-to-pan
+let isDragging = false, dragStartX = 0, dragScrollLeft = 0;
+chartOuter.addEventListener('mousedown', e => {
+  if (e.target === canvas || e.target === hitLayer || e.target.closest('#canvasWrap')) {
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragScrollLeft = chartOuter.scrollLeft;
+    chartOuter.classList.add('grabbing');
+  }
+});
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  chartOuter.scrollLeft = dragScrollLeft - (e.clientX - dragStartX);
+});
+window.addEventListener('mouseup', () => {
+  isDragging = false;
+  chartOuter.classList.remove('grabbing');
+});
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+render();
+window.addEventListener('resize', render);
+
+// ── Filter buttons ────────────────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    suppFilter = btn.dataset.filter;
+    rows = buildRows();
+    render();
+  });
+});
+</script>
+</body>
+<!-- ════════════════════════════════════════════════════════════
+     BACK-LINK SNIPPET — Theo's Care Hub
+     ════════════════════════════════════════════════════════════ -->
+<style>
+  .care-hub-back {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(26, 24, 20, 0.85);
+    color: #fdba74;
+    text-decoration: none;
+    border: 1px solid rgba(184, 137, 42, 0.4);
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  .care-hub-back:hover {
+    background: rgba(194, 65, 12, 0.95);
+    color: #ffffff;
+    border-color: #c2410c;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  }
+  .care-hub-back-icon { font-size: 14px; line-height: 1; }
+  @media (max-width: 640px) {
+    .care-hub-back { top: 8px; right: 8px; padding: 6px 10px; font-size: 10px; }
+  }
+  @media print {
+    .care-hub-back { display: none !important; }
+  }
+</style>
+<a href="https://phps02.github.io/Theo-Care-Hub/" class="care-hub-back" title="Back to Theo's Care Hub">
+  <span class="care-hub-back-icon">←</span>
+  <span>Care Hub</span>
+</a>
+<!-- ════ END OF BACK-LINK SNIPPET ════ -->
+
+</html>
