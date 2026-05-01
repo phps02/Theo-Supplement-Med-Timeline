@@ -85,7 +85,26 @@
   .lock-pill { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--gold); padding: 6px 12px; background: #fffbf0; border: 1px solid #e8d090; border-radius: 14px; cursor: pointer; }
   .lock-pill:hover { background: #fff8e0; }
   .lock-pill.unlocked { color: var(--moss); background: #e0ebda; border-color: #b8d4ad; }
-  /* Filter button group */
+  /* Zoom controls */
+  .zoom-group {
+    margin-left: auto;
+    display: flex; gap: 6px; align-items: center;
+  }
+  .zoom-btn {
+    width: 28px; height: 28px;
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 14px; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--ink-muted);
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.15s; padding: 0;
+  }
+  .zoom-btn:hover { background: var(--bg-warm); color: var(--ink); }
+  .zoom-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .zoom-level {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--ink-muted); min-width: 38px; text-align: center;
+  }
   .filter-group {
     max-width: 1300px; margin: 10px auto 0; padding: 0 32px;
     display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
@@ -256,6 +275,13 @@
   <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All <span class="filter-count" id="count-all">—</span></button>
   <button class="filter-btn" data-filter="active" onclick="setFilter('active')">Still taking <span class="filter-count" id="count-active">—</span></button>
   <button class="filter-btn" data-filter="stopped" onclick="setFilter('stopped')">Stopped <span class="filter-count" id="count-stopped">—</span></button>
+  <div class="zoom-group">
+    <span class="filter-label">Zoom</span>
+    <button class="zoom-btn" id="zoom-out" onclick="setZoom(-1)" title="Zoom out">−</button>
+    <span class="zoom-level" id="zoom-level">100%</span>
+    <button class="zoom-btn" id="zoom-in" onclick="setZoom(1)" title="Zoom in">+</button>
+    <button class="zoom-btn" onclick="resetZoom()" title="Reset zoom" style="width:auto;padding:0 10px;font-size:10px">⟲</button>
+  </div>
 </div>
 
 <div class="mini-nav"><div class="mini-nav-inner" id="mini-nav-inner"></div></div>
@@ -462,6 +488,8 @@ let lastActivityAt = Date.now();
 let editingSupp = null;
 let parsedBulkEvents = [];
 let suppFilter = 'all'; // 'all' | 'active' | 'stopped'
+let zoomLevel = 1; // 0.5 → 4 (50%–400%)
+const ZOOM_STEPS = [0.5, 0.75, 1, 1.5, 2, 3, 4];
 
 function toast(msg, type) {
   const t = document.getElementById('toast');
@@ -641,6 +669,33 @@ function setFilter(filter) {
   renderTimeline();
 }
 
+function setZoom(direction) {
+  const idx = ZOOM_STEPS.indexOf(zoomLevel);
+  let newIdx;
+  if (idx === -1) {
+    newIdx = 2; // default to 100%
+  } else {
+    newIdx = Math.max(0, Math.min(ZOOM_STEPS.length - 1, idx + direction));
+  }
+  zoomLevel = ZOOM_STEPS[newIdx];
+  applyZoom();
+}
+
+function resetZoom() {
+  zoomLevel = 1;
+  applyZoom();
+}
+
+function applyZoom() {
+  const inner = document.querySelector('.timeline-inner');
+  if (inner) {
+    inner.style.minWidth = (1100 * zoomLevel) + 'px';
+  }
+  document.getElementById('zoom-level').textContent = Math.round(zoomLevel * 100) + '%';
+  document.getElementById('zoom-in').disabled = (zoomLevel >= ZOOM_STEPS[ZOOM_STEPS.length - 1]);
+  document.getElementById('zoom-out').disabled = (zoomLevel <= ZOOM_STEPS[0]);
+}
+
 function updateFilterCounts() {
   const total = SUPPLEMENTS.length;
   const active = SUPPLEMENTS.filter(s => !s.end_date).length;
@@ -793,6 +848,7 @@ function renderTimeline() {
   container.innerHTML = '';
   const inner = document.createElement('div');
   inner.className = 'timeline-inner';
+  inner.style.minWidth = (1100 * zoomLevel) + 'px';
 
   // Apply filter
   let filteredSupps = SUPPLEMENTS;
@@ -1302,6 +1358,7 @@ async function reload() {
 (async () => {
   updateLockUI();
   await reload();
+  applyZoom();
 })();
 </script>
 </body>
