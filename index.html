@@ -163,21 +163,21 @@
   .supp-bar:hover { opacity: 1; transform: translateY(-50%) scaleY(1.15); z-index: 10; }
   /* Stopped supplements: crosshatched, faded base color */
   .supp-bar.stopped {
-    opacity: 0.6;
+    opacity: 0.55;
     background-image: repeating-linear-gradient(
       45deg,
-      rgba(255,255,255,0.35) 0px,
-      rgba(255,255,255,0.35) 1px,
-      transparent 1px,
+      rgba(255,255,255,0.55) 0px,
+      rgba(255,255,255,0.55) 1.5px,
+      transparent 1.5px,
       transparent 5px
     ), repeating-linear-gradient(
       -45deg,
-      rgba(255,255,255,0.35) 0px,
-      rgba(255,255,255,0.35) 1px,
-      transparent 1px,
+      rgba(255,255,255,0.55) 0px,
+      rgba(255,255,255,0.55) 1.5px,
+      transparent 1.5px,
       transparent 5px
     );
-    color: rgba(255,255,255,0.85);
+    color: rgba(255,255,255,0.95);
   }
   .supp-bar.stopped:hover { opacity: 0.85; }
   .supp-bar.hidden-by-filter { display: none; }
@@ -986,7 +986,7 @@ function renderSuppBar(supp, groupName) {
   const endPct = dateToPercent(endDate);
   bar.style.left = startPct + '%';
   bar.style.width = (endPct - startPct) + '%';
-  bar.style.background = GROUP_COLORS[groupName] || '#888';
+  bar.style.backgroundColor = GROUP_COLORS[groupName] || '#888';
   bar.textContent = supp.name;
   bar.addEventListener('mouseenter', (e) => showSuppTooltip(e, supp));
   bar.addEventListener('mousemove', moveTooltip);
