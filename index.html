@@ -105,8 +105,43 @@
   .chart-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; margin-bottom: 4px; }
   .chart-sub { font-size: 12px; color: var(--ink-muted); margin-bottom: 18px; }
 
-  .tl-wrap { position: relative; width: 100%; overflow-x: auto; }
-  .tl-svg { width: 100%; min-width: 740px; height: auto; display: block; }
+  .nrc-note {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    margin: -10px 0 18px;
+    padding: 8px 12px;
+    background: #f7f4ed;
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .nrc-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .nrc-text { color: var(--ink-soft); line-height: 1.5; }
+
+  .tl-wrap {
+    position: relative; width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    line-height: 0;
+  }
+  .tl-labels {
+    display: inline-block; vertical-align: top;
+    width: 170px; min-width: 170px;
+    position: sticky; left: 0; z-index: 5;
+    background: var(--paper);
+    border-right: 1px solid var(--line);
+  }
+  .tl-labels svg { width: 170px; height: auto; display: block; }
+  .tl-scroll {
+    display: inline-block; vertical-align: top;
+    /* Width is driven by the SVG's min-width below, so the parent .tl-wrap scrolls. */
+  }
+  .tl-svg { width: 1070px; min-width: 740px; height: auto; display: block; }
 
   .legend {
     display: flex; flex-wrap: wrap; gap: 16px 24px; margin-top: 14px;
@@ -224,6 +259,10 @@
   <div class="chart-card">
     <div class="chart-title">Timeline of clusters and protocol</div>
     <div class="chart-sub">Cluster marker size scales with event count. Hover any bar for details, hover a category label for its IE mechanism.</div>
+    <div class="nrc-note">
+      <span class="nrc-label">NRC diet baseline</span>
+      <span class="nrc-text">Vitamin E · Zinc · Hemp oil are delivered through Theo's NRC-balanced raw diet, not as separate supplements. See diet tab for amounts.</span>
+    </div>
     <div id="chart-host" class="tl-wrap">
       <div class="loading">Loading live data from sheet…</div>
     </div>
@@ -335,6 +374,7 @@ const CATEGORY_OVERRIDES = {
   'palmitoyl': 'Anti-inflammatory',
   'turmeric': 'Anti-inflammatory',
   'curcumin': 'Anti-inflammatory',
+  'golden paste': 'Anti-inflammatory',
   'calming care': 'Gut-Brain Axis',
   'fmt': 'Gut-Brain Axis',
   'gussy': 'Gut-Brain Axis',
@@ -630,7 +670,14 @@ function renderTimelineSVG(phases) {
     LAYOUT.axisH + 60;
 
   let y = LAYOUT.marginTop;
-  let svg = '<svg class="tl-svg" viewBox="0 0 ' + LAYOUT.width + ' ' + chartHeight + '" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg">';
+  // Bars SVG: viewBox starts at LAYOUT.marginLeft (170) to crop out the now-unused
+  // left padding where category labels used to render. dateToX() math stays unchanged;
+  // the viewBox window simply skips the empty space.
+  const barsViewboxW = LAYOUT.width - LAYOUT.marginLeft;
+  let svg = '<svg class="tl-svg" viewBox="' + LAYOUT.marginLeft + ' 0 ' + barsViewboxW + ' ' + chartHeight + '" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg">';
+  // Frozen left-column labels: separate SVG with the same Y coordinate system as the bars SVG.
+  // Width matches LAYOUT.marginLeft (170px) so labels align visually with where they used to render.
+  let labelsSvg = '<svg viewBox="0 0 ' + LAYOUT.marginLeft + ' ' + chartHeight + '" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg">';
 
   const chartBottom = chartHeight - LAYOUT.axisH - 30;
   phases.quiet.forEach(p => {
@@ -664,7 +711,8 @@ function renderTimelineSVG(phases) {
     const colors = GROUP_COLORS[groupName];
     const target = GROUP_TARGETS[groupName] || '';
 
-    svg += '<g><title>' + escapeHtml(target) + '</title><text x="' + (LAYOUT.marginLeft - 8) + '" y="' + (y + 11) + '" text-anchor="end" font-family="Fraunces, serif" font-size="13" font-weight="600" fill="var(--ink)">' + escapeHtml(groupName) + '</text></g>';
+    svg += '<g><title>' + escapeHtml(target) + '</title></g>';
+    labelsSvg += '<g><title>' + escapeHtml(target) + '</title><text x="' + (LAYOUT.marginLeft - 8) + '" y="' + (y + 11) + '" text-anchor="end" font-family="Fraunces, serif" font-size="13" font-weight="600" fill="var(--ink)">' + escapeHtml(groupName) + '</text></g>';
 
     rows.forEach(row => {
       row.segments.forEach(supp => {
@@ -725,7 +773,10 @@ function renderTimelineSVG(phases) {
   }
 
   svg += '</svg>';
-  document.getElementById('chart-host').innerHTML = svg;
+  labelsSvg += '</svg>';
+  document.getElementById('chart-host').innerHTML =
+    '<div class="tl-labels">' + labelsSvg + '</div>' +
+    '<div class="tl-scroll">' + svg + '</div>';
   attachTooltips();
 }
 
