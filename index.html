@@ -204,9 +204,91 @@
   .tl-svg .row-bar { cursor: pointer; transition: opacity 0.12s; }
   .tl-svg .row-bar:hover { opacity: 0.85; }
   .tl-svg .cluster-marker { cursor: pointer; }
+
+  /* Lock pill — top-LEFT of page (Care Hub link occupies top-right) */
+  .lock-pill {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    padding: 6px 12px; border-radius: 16px;
+    background: var(--paper); border: 1px solid var(--line);
+    color: var(--ink-muted); font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.05em; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .lock-pill:hover { border-color: var(--ink-muted); }
+  .lock-pill.unlocked { color: var(--good, #5b8a4e); border-color: var(--good, #5b8a4e); background: #f1f6ec; }
+  @media (max-width: 640px) {
+    .lock-pill { top: 8px; left: 8px; padding: 4px 10px; font-size: 10px; }
+  }
+
+  /* Manage supplements section — only visible when unlocked */
+  .manage-section { display: none; margin-top: 20px; padding: 18px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+  body.is-unlocked .manage-section { display: block; }
+  .manage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+  .manage-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; color: var(--ink); }
+  .manage-sub { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+  .add-supp-btn {
+    padding: 7px 14px; background: var(--moss, #5b8a4e); color: #fff; border: none; border-radius: 5px;
+    cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600;
+  }
+  .add-supp-btn:hover { opacity: 0.9; }
+  .supp-list { display: flex; flex-direction: column; gap: 4px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
+  .supp-row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    background: #ffffff; border: 1px solid var(--line); border-radius: 5px;
+    font-size: 12px;
+  }
+  .supp-row.stopped { opacity: 0.6; background: #fafaf7; }
+  .supp-row-name { flex: 2; font-weight: 600; color: var(--ink); }
+  .supp-row-group { flex: 1.2; color: var(--ink-muted); font-size: 11px; }
+  .supp-row-dates { flex: 1.5; color: var(--ink-muted); font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+  .supp-row-dose { flex: 1.2; color: var(--ink-muted); font-size: 11px; }
+  .supp-row-actions { display: flex; gap: 4px; }
+  .supp-row-btn {
+    padding: 4px 8px; background: transparent; border: 1px solid var(--line); border-radius: 4px;
+    cursor: pointer; font-family: inherit; font-size: 11px; color: var(--ink-muted);
+  }
+  .supp-row-btn:hover { background: #f5f3ec; color: var(--ink); }
+  .supp-row-btn.danger:hover { background: #fee2e2; color: #b91c1c; border-color: #b91c1c; }
+
+  /* Edit modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(20,18,14,0.55);
+    display: flex; align-items: center; justify-content: center; z-index: 200;
+    padding: 16px;
+  }
+  .edit-modal {
+    background: #ffffff; border: 1px solid var(--line); border-radius: 10px;
+    padding: 24px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto;
+    color: var(--ink);
+  }
+  .edit-modal-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .edit-modal-sub { font-size: 12px; color: var(--ink-muted); margin-bottom: 16px; }
+  .edit-modal-field { margin-bottom: 12px; }
+  .edit-modal-label { display: block; font-size: 11px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 600; }
+  .edit-modal-input, .edit-modal-textarea, .edit-modal-select {
+    width: 100%; padding: 8px 10px; background: #ffffff; border: 1px solid var(--line);
+    border-radius: 5px; color: var(--ink); font-family: inherit; font-size: 13px;
+    box-sizing: border-box;
+  }
+  .edit-modal-textarea { min-height: 60px; resize: vertical; }
+  .edit-modal-row { display: flex; gap: 10px; }
+  .edit-modal-row .edit-modal-field { flex: 1; }
+  .edit-modal-actions { display: flex; gap: 8px; justify-content: space-between; margin-top: 18px; flex-wrap: wrap; }
+  .edit-modal-actions-right { display: flex; gap: 8px; }
+  .modal-btn {
+    padding: 9px 16px; border: 1px solid var(--line); background: #ffffff;
+    color: var(--ink-muted); border-radius: 5px; cursor: pointer;
+    font-family: inherit; font-size: 13px;
+  }
+  .modal-btn.primary { background: var(--moss, #5b8a4e); color: #ffffff; border-color: var(--moss, #5b8a4e); font-weight: 600; }
+  .modal-btn.primary:disabled { opacity: 0.6; cursor: wait; }
+  .modal-btn.danger { color: #b91c1c; border-color: #b91c1c; }
+  .modal-btn.danger:hover { background: #fee2e2; }
 </style>
 </head>
 <body>
+
+<span class="lock-pill" id="lock-pill" onclick="toggleSuppLock()" title="Click to unlock editing">🔒 View only</span>
 
 <a href="https://phps02.github.io/Theo-Care-Hub/" class="care-hub-back">← Care Hub</a>
 
@@ -220,7 +302,7 @@
 </svg>
 
 <header class="hero">
-  <div class="hero-eyebrow">Pattern View · Analytical Read-Only</div>
+  <div class="hero-eyebrow">Pattern View · Live · Editable</div>
   <h1 class="hero-title">What's <em>working</em>?</h1>
   <p class="hero-sub">Severity-weighted seizure markers overlaid against supplement protocol changes, grouped by pathophysiological target. Quiet stretches and compressed cluster phases auto-detected. Stopped supplements shown as crosshatched bars. Pulls live from the same Google Sheet as the timeline tool.</p>
 </header>
@@ -271,6 +353,17 @@
 </section>
 
 <section class="insights" id="insights"></section>
+
+<section class="manage-section" id="manage-section">
+  <div class="manage-header">
+    <div>
+      <div class="manage-title">Manage supplements</div>
+      <div class="manage-sub">Edits sync immediately to the Google Sheet. All other tools see changes on next load.</div>
+    </div>
+    <button class="add-supp-btn" onclick="openSuppEditor(null)">+ Add supplement</button>
+  </div>
+  <div class="supp-list" id="supp-list"></div>
+</section>
 
 <div class="footer-meta">
   <span id="data-stamp">Data: live from sheet</span>
@@ -617,6 +710,9 @@ function render() {
 
   document.getElementById('data-stamp').textContent =
     'Live from sheet · Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+  // Keep the editor list in sync with re-fetched data
+  if (typeof renderSuppList === 'function') renderSuppList();
 }
 
 function renderStatCards(phases) {
@@ -916,6 +1012,243 @@ async function init() {
   }
 }
 init();
+
+// ─── Edit Lock + Supplement Editor ──────────────────────────────────────────
+// Password is NOT stored in this HTML. User types it; we POST verify_secret
+// to Apps Script which checks against WRITE_SECRET in Script Properties.
+// In-memory only; cleared on lock, auto-lock, or browser close.
+const SUPP_AUTO_LOCK_MINUTES = 30;
+let _suppUnlocked = false;
+let _suppLastActivity = Date.now();
+let _suppWriteSecret = '';
+
+function suppIsUnlocked() {
+  if (!_suppUnlocked) return false;
+  const minSince = (Date.now() - _suppLastActivity) / 60000;
+  if (minSince > SUPP_AUTO_LOCK_MINUTES) {
+    _suppUnlocked = false;
+    _suppWriteSecret = '';
+    applySuppLockState();
+    return false;
+  }
+  return true;
+}
+
+function suppRecordActivity() {
+  if (_suppUnlocked) _suppLastActivity = Date.now();
+}
+
+function applySuppLockState() {
+  const unlocked = suppIsUnlocked();
+  document.body.classList.toggle('is-unlocked', unlocked);
+  const pill = document.getElementById('lock-pill');
+  if (pill) {
+    pill.className = 'lock-pill ' + (unlocked ? 'unlocked' : '');
+    pill.textContent = unlocked ? '🔓 Edit mode' : '🔒 View only';
+    pill.title = unlocked ? 'Click to lock (read-only)' : 'Click to unlock editing';
+  }
+  if (unlocked) renderSuppList();
+}
+
+async function toggleSuppLock() {
+  if (suppIsUnlocked()) {
+    _suppUnlocked = false;
+    _suppWriteSecret = '';
+    applySuppLockState();
+    return;
+  }
+  const pwd = prompt('Enter password to enable editing:');
+  if (pwd === null) return; // cancelled
+  if (!pwd) { alert('Enter a password.'); return; }
+  try {
+    const r = await fetch(SHEET_API, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify({action: 'verify_secret', secret: pwd})
+    });
+    if (!r.ok) throw new Error('Network error (HTTP ' + r.status + ')');
+    const resp = await r.json();
+    if (resp.ok) {
+      _suppUnlocked = true;
+      _suppWriteSecret = pwd;
+      _suppLastActivity = Date.now();
+      applySuppLockState();
+    } else if (resp.error === 'Unauthorized') {
+      alert('Incorrect password.');
+    } else {
+      alert('Server error: ' + (resp.error || 'unknown'));
+    }
+  } catch (e) {
+    alert('Could not reach server — check connection. (' + e.message + ')');
+  }
+}
+
+// Shared POST helper for writes. Parses response, surfaces auth errors.
+async function postSuppWrite(payload, errLabel) {
+  const r = await fetch(SHEET_API, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  });
+  if (!r.ok) throw new Error(errLabel + ' failed (HTTP ' + r.status + ')');
+  let resp;
+  try { resp = await r.json(); } catch { return true; }
+  if (resp && resp.error) {
+    if (resp.error === 'Unauthorized') {
+      _suppUnlocked = false; _suppWriteSecret = '';
+      applySuppLockState();
+      throw new Error('Unauthorized — please unlock again');
+    }
+    throw new Error(errLabel + ': ' + resp.error);
+  }
+  return resp || true;
+}
+
+// ─── Render the editable list ──────────────────────────────────────────────
+function renderSuppList() {
+  const host = document.getElementById('supp-list');
+  if (!host) return;
+  if (!SUPPLEMENTS.length) {
+    host.innerHTML = '<div style="padding:12px;color:var(--ink-muted);font-size:12px;">No supplements yet — click "+ Add supplement" to start.</div>';
+    return;
+  }
+  // Sort: active first (no end_date or end_date in future), then by start desc
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const sorted = [...SUPPLEMENTS].sort((a, b) => {
+    const aActive = !a.end_date || a.end_date >= todayStr;
+    const bActive = !b.end_date || b.end_date >= todayStr;
+    if (aActive !== bActive) return aActive ? -1 : 1;
+    return (b.start_date || '').localeCompare(a.start_date || '');
+  });
+  host.innerHTML = sorted.map(s => {
+    const isStopped = s.end_date && s.end_date < todayStr;
+    const datesStr = (s.start_date || '?') + (s.end_date ? ' → ' + s.end_date : ' → now');
+    return '<div class="supp-row ' + (isStopped ? 'stopped' : '') + '" data-id="' + escapeHtml(String(s.id)) + '">' +
+      '<div class="supp-row-name">' + escapeHtml(s.name || '(unnamed)') + '</div>' +
+      '<div class="supp-row-group">' + escapeHtml(s.group || '—') + '</div>' +
+      '<div class="supp-row-dates">' + escapeHtml(datesStr) + '</div>' +
+      '<div class="supp-row-dose">' + escapeHtml(s.dose || '') + '</div>' +
+      '<div class="supp-row-actions">' +
+        '<button class="supp-row-btn" onclick="openSuppEditor(\'' + encodeURIComponent(String(s.id)) + '\')">✎ Edit</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ─── Edit modal ────────────────────────────────────────────────────────────
+function openSuppEditor(idEncoded) {
+  if (!suppIsUnlocked()) { alert('Unlock editing first.'); return; }
+  suppRecordActivity();
+  const id = idEncoded ? decodeURIComponent(idEncoded) : null;
+  const existing = id ? SUPPLEMENTS.find(s => String(s.id) === id) : null;
+  const isNew = !existing;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+  const modal = document.createElement('div');
+  modal.className = 'edit-modal';
+  modal.onclick = (e) => e.stopPropagation();
+  overlay.appendChild(modal);
+
+  modal.innerHTML =
+    '<div class="edit-modal-title">' + (isNew ? 'Add supplement' : 'Edit supplement') + '</div>' +
+    '<div class="edit-modal-sub">' + (isNew ? 'Adding a new entry to the supplements sheet.' : 'Editing entry #' + escapeHtml(String(existing.id)) + ' — changes sync immediately.') + '</div>' +
+    '<div class="edit-modal-field">' +
+      '<label class="edit-modal-label">Name</label>' +
+      '<input class="edit-modal-input" id="sf-name" placeholder="e.g. Thorne B-Complex #6" value="' + escapeHtml(existing ? (existing.name || '') : '') + '">' +
+    '</div>' +
+    '<div class="edit-modal-field">' +
+      '<label class="edit-modal-label">Category (group)</label>' +
+      '<select class="edit-modal-select" id="sf-group">' +
+        '<option value="">— uncategorized —</option>' +
+        GROUP_ORDER.map(g => '<option value="' + escapeHtml(g) + '"' + (existing && existing.group === g ? ' selected' : '') + '>' + escapeHtml(g) + '</option>').join('') +
+      '</select>' +
+    '</div>' +
+    '<div class="edit-modal-row">' +
+      '<div class="edit-modal-field">' +
+        '<label class="edit-modal-label">Start date</label>' +
+        '<input class="edit-modal-input" type="date" id="sf-start" value="' + escapeHtml(existing ? (existing.start_date || '') : '') + '">' +
+      '</div>' +
+      '<div class="edit-modal-field">' +
+        '<label class="edit-modal-label">End date <span style="text-transform:none;font-weight:400;">(blank = still active)</span></label>' +
+        '<input class="edit-modal-input" type="date" id="sf-end" value="' + escapeHtml(existing ? (existing.end_date || '') : '') + '">' +
+      '</div>' +
+    '</div>' +
+    '<div class="edit-modal-field">' +
+      '<label class="edit-modal-label">Dose</label>' +
+      '<input class="edit-modal-input" id="sf-dose" placeholder="e.g. 1 cap (100 mg B6) AM" value="' + escapeHtml(existing ? (existing.dose || '') : '') + '">' +
+    '</div>' +
+    '<div class="edit-modal-field">' +
+      '<label class="edit-modal-label">Notes</label>' +
+      '<textarea class="edit-modal-textarea" id="sf-note" placeholder="rationale, brand, source, observations">' + escapeHtml(existing ? (existing.note || '') : '') + '</textarea>' +
+    '</div>' +
+    '<div class="edit-modal-actions">' +
+      '<div>' + (isNew ? '<span></span>' : '<button class="modal-btn danger" id="sf-delete">🗑 Delete</button>') + '</div>' +
+      '<div class="edit-modal-actions-right">' +
+        '<button class="modal-btn" id="sf-cancel">Cancel</button>' +
+        '<button class="modal-btn primary" id="sf-save">' + (isNew ? '+ Add' : 'Save') + '</button>' +
+      '</div>' +
+    '</div>';
+
+  document.body.appendChild(overlay);
+  document.getElementById('sf-name').focus();
+
+  document.getElementById('sf-cancel').onclick = () => overlay.remove();
+
+  document.getElementById('sf-save').onclick = async () => {
+    suppRecordActivity();
+    const payload = {
+      secret: _suppWriteSecret,
+      name: document.getElementById('sf-name').value.trim(),
+      group: document.getElementById('sf-group').value,
+      start_date: document.getElementById('sf-start').value,
+      end_date: document.getElementById('sf-end').value,
+      dose: document.getElementById('sf-dose').value.trim(),
+      note: document.getElementById('sf-note').value.trim()
+    };
+    if (!payload.name) { alert('Name is required.'); return; }
+    const saveBtn = document.getElementById('sf-save');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    try {
+      if (isNew) {
+        await postSuppWrite({action: 'addSupp', ...payload}, 'Add supplement');
+      } else {
+        await postSuppWrite({action: 'updateSupp', id: existing.id, ...payload}, 'Update supplement');
+      }
+      // Re-fetch and re-render
+      SUPPLEMENTS = await fetchSupplements();
+      overlay.remove();
+      // Re-run the main pipeline so the chart and stats reflect changes
+      if (typeof init === 'function') {
+        await init();
+      } else {
+        renderSuppList();
+      }
+    } catch (e) {
+      alert('Save failed: ' + e.message);
+      saveBtn.disabled = false;
+      saveBtn.textContent = isNew ? '+ Add' : 'Save';
+    }
+  };
+
+  if (!isNew) {
+    document.getElementById('sf-delete').onclick = async () => {
+      if (!confirm('Delete "' + (existing.name || 'this supplement') + '" permanently?')) return;
+      suppRecordActivity();
+      try {
+        await postSuppWrite({action: 'deleteSupp', secret: _suppWriteSecret, id: existing.id}, 'Delete supplement');
+        SUPPLEMENTS = await fetchSupplements();
+        overlay.remove();
+        if (typeof init === 'function') await init();
+      } catch (e) {
+        alert('Delete failed: ' + e.message);
+      }
+    };
+  }
+}
 </script>
 </body>
 </html>
