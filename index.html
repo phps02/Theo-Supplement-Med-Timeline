@@ -56,13 +56,13 @@
   @media (max-width: 640px) {
     .care-hub-back { top: 8px; right: 8px; padding: 6px 10px; font-size: 10px; }
   }
-  .hero { max-width: 1300px; margin: 0 auto; padding: 32px 32px 16px; }
+  .hero { max-width: 1300px; margin: 0 auto; padding: 32px 32px 8px; }
   .hero-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.25em; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 6px; }
   .hero-title { font-family: 'Fraunces', serif; font-size: clamp(26px, 4vw, 38px); font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 8px; }
   .hero-title em { font-style: italic; color: var(--accent); font-weight: 500; }
-  .hero-sub { font-size: 14px; color: var(--ink-muted); max-width: 720px; }
+  .hero-sub { font-size: 14px; color: var(--ink-muted); max-width: none; }
 
-  .stat-row { max-width: 1300px; margin: 16px auto 0; padding: 0 32px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .stat-row { max-width: 1300px; margin: 8px auto 0; padding: 0 32px; display: grid; grid-template-columns: 0.85fr 1.15fr 0.9fr 1.1fr; gap: 10px; }
   @media (max-width: 800px) { .stat-row { grid-template-columns: 1fr 1fr; } }
   .stat-card { background: var(--paper); border: 1px solid var(--line); padding: 10px 14px; border-radius: 6px; position: relative; }
   .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--accent); }
@@ -305,6 +305,9 @@
   <div class="hero-eyebrow">Pattern View · Live · Editable</div>
   <h1 class="hero-title">What's <em>working</em>?</h1>
   <p class="hero-sub">Severity-weighted seizure markers overlaid against supplement protocol changes, grouped by pathophysiological target. Quiet stretches and compressed cluster phases auto-detected. Stopped supplements shown as crosshatched bars. Pulls live from the same Google Sheet as the timeline tool.</p>
+  <div style="margin-top: 12px; text-align: right;">
+    <button id="export-pdf-btn" onclick="exportTimelinePDF()" style="padding: 7px 14px; font-size: 12px; background: var(--paper); color: var(--ink-muted); border: 1px solid var(--line); border-radius: 5px; cursor: pointer; font-family: inherit; font-weight: 500;">📄 Export PDF</button>
+  </div>
 </header>
 
 <section class="stat-row" id="stat-row">
@@ -337,7 +340,7 @@
   <button class="filter-btn" data-filter="stopped" onclick="setFilter('stopped')">Stopped <span class="filter-count" id="cnt-stopped"></span></button>
 </section>
 
-<section class="chart-shell">
+<section class="chart-shell" id="chart-section">
   <div class="chart-card">
     <div class="chart-title">Timeline of clusters and protocol</div>
     <div class="chart-sub">Cluster marker size scales with event count. Hover any bar for details, hover a category label for its IE mechanism.</div>
@@ -1247,6 +1250,253 @@ function openSuppEditor(idEncoded) {
         alert('Delete failed: ' + e.message);
       }
     };
+  }
+}
+
+// ─── Export PDF for Supplement Timeline ────────────────────────────────────
+// Strategy: clone the main rendered content (stat cards, timeline SVG, legend,
+// insights cards) into a new window with print-friendly styling. The full
+// page CSS is reused so visuals match what's on screen — we just strip
+// position:fixed UI chrome (Care Hub button, Lock pill) and the manage
+// section, then trigger window.print().
+function exportTimelinePDF() {
+  const w = window.open('', 'timeline-pdf', 'width=1100,height=900');
+  if (!w) {
+    alert('Pop-up blocked — please allow pop-ups for this site to use Export PDF.');
+    return;
+  }
+
+  // Sections to include in the export — keep in this order.
+  const sectionIds = ['stat-row', 'chart-section', 'insights'];
+
+  // Collect <style> blocks and font links from the live page so the cloned
+  // content keeps its typography and colors.
+  const styleNodes = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
+    .map(n => n.outerHTML).join('\n');
+
+  const today = new Date().toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  // ── SIZING STRATEGY ────────────────────────────────────────────────────
+  // Landscape letter @ 0.25in margins = 11" - 0.5" = 10.5" wide × 7.5" tall
+  // At 96dpi: ~1008px × 720px usable. After accounting for body padding
+  // (24px each side = 48px) and hero/stats/insights (~280px combined height),
+  // we have about:
+  //   - Width available for chart:  ~960px
+  //   - Height available for chart: ~430px
+  //
+  // Read the actual SVG natural dimensions from the live page and compute
+  // a scale factor that fits both width AND height of the available area.
+  // The SVG itself uses preserveAspectRatio to scale proportionally, so we
+  // just need to set its container's width/height correctly.
+  const liveSvg = document.querySelector('.tl-svg');
+  const labelsSvg = document.querySelector('.tl-labels svg');
+  // SVG viewBox dimensions = the real chart aspect ratio
+  // Format: "x y width height" — we want width (index 2) and height (3).
+  let svgNaturalW = 1070, svgNaturalH = 853, labelsNaturalW = 170;
+  if (liveSvg) {
+    const vb = liveSvg.getAttribute('viewBox');
+    if (vb) {
+      const parts = vb.split(/\s+/).map(Number);
+      if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) {
+        svgNaturalW = parts[2];
+        svgNaturalH = parts[3];
+      }
+    }
+  }
+  if (labelsSvg) {
+    labelsNaturalW = labelsSvg.clientWidth || labelsSvg.getBoundingClientRect().width || 170;
+  }
+
+  const PAGE_W = 960;   // available content width on landscape page
+  const PAGE_H = 430;   // available chart height after hero+stats+insights
+  const LABEL_W = Math.min(150, labelsNaturalW); // labels take fixed left column
+  const CHART_W_AVAIL = PAGE_W - LABEL_W - 20;   // 20 = gap
+
+  // Two constraint ratios — use the smaller so chart fits both dimensions
+  const scaleByW = CHART_W_AVAIL / svgNaturalW;
+  const scaleByH = PAGE_H / svgNaturalH;
+  const scale = Math.min(scaleByW, scaleByH, 1); // never upscale
+
+  // Final dimensions in print-window CSS pixels
+  const FINAL_CHART_W = Math.round(svgNaturalW * scale);
+  const FINAL_CHART_H = Math.round(svgNaturalH * scale);
+  const FINAL_LABELS_W = Math.round(LABEL_W);
+  const TOTAL_WRAP_W = FINAL_CHART_W + FINAL_LABELS_W + 20;
+
+  const PRINT_WIDTH = 1000;
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Theo — Supplement Timeline (${today})</title>
+${styleNodes}
+<style>
+  /* Strip UI chrome that doesn't belong in print */
+  .lock-pill, .care-hub-back, .manage-section, #export-pdf-btn { display: none !important; }
+
+  /* Override the live page's responsive media query — the print viewport
+     can be measured as narrow and trigger mobile layouts we don't want. */
+  @media (max-width: 800px) {
+    .stat-row {
+      grid-template-columns: 0.85fr 1.15fr 0.9fr 1.1fr !important;
+    }
+    .insights {
+      grid-template-columns: 1fr 1fr !important;
+    }
+  }
+
+  /* Fixed-width print page — every child layout is measured against this. */
+  body {
+    padding: 12px 16px !important;
+    width: ${PRINT_WIDTH}px !important;
+    max-width: ${PRINT_WIDTH}px !important;
+    margin: 0 auto !important;
+    background: #fff !important;
+    font-size: 12px !important;
+  }
+
+  /* Tight hero — smaller title, narrow margins, no wasted vertical space */
+  .hero {
+    padding: 0 0 4px !important;
+    max-width: none !important;
+    margin: 0 0 6px !important;
+  }
+  .hero-title {
+    font-size: 22px !important;
+    margin-bottom: 4px !important;
+  }
+  .hero-eyebrow { font-size: 9px !important; margin-bottom: 3px !important; }
+  .pdf-meta { color: var(--ink-muted); font-size: 10px; margin-top: 2px; margin-bottom: 8px; font-style: italic; }
+
+  /* Stat row tightened to one tidy row */
+  .stat-row {
+    max-width: none !important;
+    margin: 0 0 8px !important;
+    padding: 0 !important;
+    display: grid !important;
+    grid-template-columns: 0.85fr 1.15fr 0.9fr 1.1fr !important;
+    gap: 8px !important;
+  }
+  .stat-card { padding: 6px 10px !important; }
+  .stat-card-label { font-size: 7px !important; margin-bottom: 2px !important; }
+  .stat-card-val { font-size: 18px !important; }
+  .stat-card-meta { font-size: 9px !important; margin-top: 1px !important; }
+
+  /* Chart card full width, compact */
+  .chart-shell, .chart-card {
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+    margin: 0 0 8px !important;
+  }
+  .chart-card { padding: 10px 12px !important; }
+  .chart-title { font-size: 13px !important; margin-bottom: 2px !important; }
+  .chart-sub { font-size: 10px !important; margin-bottom: 4px !important; }
+  .nrc-note { margin: 4px 0 6px !important; padding: 4px 8px !important; font-size: 10px !important; }
+  .nrc-label { font-size: 9px !important; }
+
+  /* CRITICAL: rewrite the timeline layout for print using flexbox with
+     explicit pixel widths so labels and chart stay aligned. */
+  .tl-wrap {
+    overflow: visible !important;
+    width: ${TOTAL_WRAP_W}px !important;
+    max-width: ${TOTAL_WRAP_W}px !important;
+    white-space: normal !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    line-height: 1.2 !important;
+    margin: 0 auto !important;
+  }
+  .tl-labels {
+    position: static !important;
+    width: ${FINAL_LABELS_W}px !important;
+    min-width: ${FINAL_LABELS_W}px !important;
+    max-width: ${FINAL_LABELS_W}px !important;
+    flex: 0 0 ${FINAL_LABELS_W}px !important;
+    display: block !important;
+  }
+  .tl-labels svg {
+    width: ${FINAL_LABELS_W}px !important;
+    height: ${FINAL_CHART_H}px !important;
+    max-height: ${FINAL_CHART_H}px !important;
+    display: block !important;
+  }
+  .tl-scroll {
+    display: block !important;
+    flex: 0 0 ${FINAL_CHART_W}px !important;
+    width: ${FINAL_CHART_W}px !important;
+    max-width: ${FINAL_CHART_W}px !important;
+    overflow: visible !important;
+  }
+  .tl-svg {
+    width: ${FINAL_CHART_W}px !important;
+    max-width: ${FINAL_CHART_W}px !important;
+    min-width: 0 !important;
+    height: ${FINAL_CHART_H}px !important;
+    max-height: ${FINAL_CHART_H}px !important;
+    display: block !important;
+  }
+
+  /* Legend tight under chart */
+  .legend { margin-top: 6px !important; font-size: 10px !important; gap: 8px 16px !important; }
+
+  /* Hide scrollbars */
+  .tl-wrap::-webkit-scrollbar, .tl-scroll::-webkit-scrollbar { display: none !important; height: 0 !important; }
+
+  /* Insights tight */
+  .insights {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+    margin: 0 !important;
+  }
+  .insights > * { padding: 8px 12px !important; }
+  .insights h3, .insights .label { font-size: 9px !important; margin-bottom: 3px !important; }
+
+  @media print {
+    @page { size: landscape; margin: 0.25in 0.3in; }
+    html, body { height: auto !important; }
+    body { width: ${PRINT_WIDTH}px !important; }
+    /* Do NOT force break-inside on chart-card — let it fit naturally.
+       Only avoid splitting individual stat-cards or insight cards. */
+    .stat-card, .insights > * {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+    }
+  }
+</style>
+</head><body>
+<header class="hero">
+  <div class="hero-eyebrow">Theo · Supplement Timeline</div>
+  <h1 class="hero-title">What's <em>working</em>?</h1>
+  <div class="pdf-meta">Generated ${today} · Pattern view of supplement protocol vs seizure history</div>
+</header>
+<div id="pdf-content"></div>
+</body></html>`;
+
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+
+  const inject = () => {
+    const target = w.document.getElementById('pdf-content');
+    if (!target) return;
+    sectionIds.forEach(id => {
+      const src = document.getElementById(id);
+      if (src) {
+        const cloned = w.document.importNode(src, true);
+        // Strip interactive controls
+        cloned.querySelectorAll('button, input').forEach(el => el.remove());
+        target.appendChild(cloned);
+      }
+    });
+    // Wait for fonts + SVG layout to settle before triggering print
+    setTimeout(() => w.print(), 500);
+  };
+  if (w.document.readyState === 'complete') {
+    inject();
+  } else {
+    w.addEventListener('load', inject, { once: true });
   }
 }
 </script>
