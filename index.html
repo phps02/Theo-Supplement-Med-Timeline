@@ -641,14 +641,38 @@ function setFilter(f) {
   });
   render();
 }
+// Two entries that share the same rowKey (e.g., "P5P pinch" stopped + "P5P pinch"
+// restarted) form a single logical supplement. For filtering and counting
+// purposes a supplement is "active" if ANY of its entries is still active
+// (i.e., has no end_date); otherwise "stopped". This means a restarted
+// supplement correctly appears under "active" rather than being double-counted.
+function buildSuppGroups(supps) {
+  const groups = {};
+  supps.forEach(s => {
+    const k = rowKey(s);
+    if (!groups[k]) groups[k] = { entries: [], hasActive: false };
+    groups[k].entries.push(s);
+    if (!s.end_date) groups[k].hasActive = true;
+  });
+  return groups;
+}
+
 function applyFilter(supps) {
-  if (currentFilter === 'active')  return supps.filter(s => !s.end_date);
-  if (currentFilter === 'stopped') return supps.filter(s => !!s.end_date);
+  if (currentFilter === 'all') return supps;
+  const groups = buildSuppGroups(supps);
+  if (currentFilter === 'active') {
+    return supps.filter(s => groups[rowKey(s)].hasActive);
+  }
+  if (currentFilter === 'stopped') {
+    return supps.filter(s => !groups[rowKey(s)].hasActive);
+  }
   return supps;
 }
 function updateFilterCounts() {
-  const total   = SUPPLEMENTS.length;
-  const active  = SUPPLEMENTS.filter(s => !s.end_date).length;
+  const groups = buildSuppGroups(SUPPLEMENTS);
+  const keys = Object.keys(groups);
+  const total   = keys.length;
+  const active  = keys.filter(k => groups[k].hasActive).length;
   const stopped = total - active;
   const a = document.getElementById('cnt-all');     if (a) a.textContent = '(' + total + ')';
   const c = document.getElementById('cnt-active');  if (c) c.textContent = '(' + active + ')';
@@ -733,9 +757,11 @@ function renderStatCards(phases) {
   document.getElementById('stat-clusters').textContent = CLUSTERS.length;
   document.getElementById('stat-clusters-meta').textContent = SEIZURES_ALL.length + ' total events';
 
-  const activeCount = SUPPLEMENTS.filter(s => !s.end_date).length;
+  const _suppGroups = buildSuppGroups(SUPPLEMENTS);
+  const _groupKeys = Object.keys(_suppGroups);
+  const activeCount = _groupKeys.filter(k => _suppGroups[k].hasActive).length;
   document.getElementById('stat-active').textContent = activeCount;
-  document.getElementById('stat-active-meta').textContent = 'of ' + SUPPLEMENTS.length + ' total';
+  document.getElementById('stat-active-meta').textContent = 'of ' + _groupKeys.length + ' total';
 }
 
 function renderTimelineSVG(phases) {
@@ -1139,12 +1165,22 @@ function renderSuppList() {
 }
 
 // ─── Edit modal ────────────────────────────────────────────────────────────
-function openSuppEditor(idEncoded) {
+// Accepts either an encoded id string (edit existing entry) OR a seed object
+// (new entry pre-populated with values — used by the restart workflow).
+function openSuppEditor(arg) {
   if (!suppIsUnlocked()) { alert('Unlock editing first.'); return; }
   suppRecordActivity();
-  const id = idEncoded ? decodeURIComponent(idEncoded) : null;
-  const existing = id ? SUPPLEMENTS.find(s => String(s.id) === id) : null;
+  let id = null, existing = null, seed = null;
+  if (arg && typeof arg === 'object') {
+    seed = arg; // restart-style seed: no id, but identity fields pre-filled
+  } else if (arg) {
+    id = decodeURIComponent(arg);
+    existing = SUPPLEMENTS.find(s => String(s.id) === id) || null;
+  }
   const isNew = !existing;
+  // For form-field population, prefer the seed (restart) over existing
+  const formSource = existing || seed || null;
+  const isRestart = !!(seed && seed._isRestart);
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -1156,42 +1192,43 @@ function openSuppEditor(idEncoded) {
   overlay.appendChild(modal);
 
   modal.innerHTML =
-    '<div class="edit-modal-title">' + (isNew ? 'Add supplement' : 'Edit supplement') + '</div>' +
-    '<div class="edit-modal-sub">' + (isNew ? 'Adding a new entry to the supplements sheet.' : 'Editing entry #' + escapeHtml(String(existing.id)) + ' — changes sync immediately.') + '</div>' +
+    '<div class="edit-modal-title">' + (isRestart ? '↻ Restart supplement' : (isNew ? 'Add supplement' : 'Edit supplement')) + '</div>' +
+    '<div class="edit-modal-sub">' + (isRestart ? 'Creating a new active period for this supplement. The previous stopped period will remain in the timeline.' : (isNew ? 'Adding a new entry to the supplements sheet.' : 'Editing entry #' + escapeHtml(String(existing.id)) + ' — changes sync immediately.')) + '</div>' +
     '<div class="edit-modal-field">' +
       '<label class="edit-modal-label">Name</label>' +
-      '<input class="edit-modal-input" id="sf-name" placeholder="e.g. Thorne B-Complex #6" value="' + escapeHtml(existing ? (existing.name || '') : '') + '">' +
+      '<input class="edit-modal-input" id="sf-name" placeholder="e.g. Thorne B-Complex #6" value="' + escapeHtml(formSource ? (formSource.name || '') : '') + '">' +
     '</div>' +
     '<div class="edit-modal-field">' +
       '<label class="edit-modal-label">Category (group)</label>' +
       '<select class="edit-modal-select" id="sf-group">' +
         '<option value="">— uncategorized —</option>' +
-        GROUP_ORDER.map(g => '<option value="' + escapeHtml(g) + '"' + (existing && existing.group === g ? ' selected' : '') + '>' + escapeHtml(g) + '</option>').join('') +
+        GROUP_ORDER.map(g => '<option value="' + escapeHtml(g) + '"' + (formSource && formSource.group === g ? ' selected' : '') + '>' + escapeHtml(g) + '</option>').join('') +
       '</select>' +
     '</div>' +
     '<div class="edit-modal-row">' +
       '<div class="edit-modal-field">' +
         '<label class="edit-modal-label">Start date</label>' +
-        '<input class="edit-modal-input" type="date" id="sf-start" value="' + escapeHtml(existing ? (existing.start_date || '') : '') + '">' +
+        '<input class="edit-modal-input" type="date" id="sf-start" value="' + escapeHtml(formSource ? (formSource.start_date || '') : '') + '">' +
       '</div>' +
       '<div class="edit-modal-field">' +
         '<label class="edit-modal-label">End date <span style="text-transform:none;font-weight:400;">(blank = still active)</span></label>' +
-        '<input class="edit-modal-input" type="date" id="sf-end" value="' + escapeHtml(existing ? (existing.end_date || '') : '') + '">' +
+        '<input class="edit-modal-input" type="date" id="sf-end" value="' + escapeHtml(formSource ? (formSource.end_date || '') : '') + '">' +
       '</div>' +
     '</div>' +
     '<div class="edit-modal-field">' +
       '<label class="edit-modal-label">Dose</label>' +
-      '<input class="edit-modal-input" id="sf-dose" placeholder="e.g. 1 cap (100 mg B6) AM" value="' + escapeHtml(existing ? (existing.dose || '') : '') + '">' +
+      '<input class="edit-modal-input" id="sf-dose" placeholder="e.g. 1 cap (100 mg B6) AM" value="' + escapeHtml(formSource ? (formSource.dose || '') : '') + '">' +
     '</div>' +
     '<div class="edit-modal-field">' +
       '<label class="edit-modal-label">Notes</label>' +
-      '<textarea class="edit-modal-textarea" id="sf-note" placeholder="rationale, brand, source, observations">' + escapeHtml(existing ? (existing.note || '') : '') + '</textarea>' +
+      '<textarea class="edit-modal-textarea" id="sf-note" placeholder="rationale, brand, source, observations">' + escapeHtml(formSource ? (formSource.note || '') : '') + '</textarea>' +
     '</div>' +
     '<div class="edit-modal-actions">' +
       '<div>' + (isNew ? '<span></span>' : '<button class="modal-btn danger" id="sf-delete">🗑 Delete</button>') + '</div>' +
       '<div class="edit-modal-actions-right">' +
+        (!isNew && existing && existing.end_date ? '<button class="modal-btn" id="sf-restart" title="Create a new entry continuing this supplement from today">↻ Restart</button>' : '') +
         '<button class="modal-btn" id="sf-cancel">Cancel</button>' +
-        '<button class="modal-btn primary" id="sf-save">' + (isNew ? '+ Add' : 'Save') + '</button>' +
+        '<button class="modal-btn primary" id="sf-save">' + (isRestart ? '↻ Restart' : (isNew ? '+ Add' : 'Save')) + '</button>' +
       '</div>' +
     '</div>';
 
@@ -1199,6 +1236,30 @@ function openSuppEditor(idEncoded) {
   document.getElementById('sf-name').focus();
 
   document.getElementById('sf-cancel').onclick = () => overlay.remove();
+
+  // Restart workflow: close this modal and open a fresh "Add supplement" modal
+  // with the previous entry's identity fields (name, category, dose, notes)
+  // pre-populated, but start_date defaulted to today and end_date blank.
+  // This creates a SECOND sheet row with the same name — the chart's rowKey
+  // grouping then renders both periods as two bars on the same row, with the
+  // gap between them visible.
+  const restartBtn = document.getElementById('sf-restart');
+  if (restartBtn) {
+    restartBtn.onclick = () => {
+      const seed = {
+        name: existing.name || '',
+        group: existing.group || '',
+        dose: existing.dose || '',
+        note: existing.note || '',
+        start_date: todayISO(),
+        end_date: '',
+        _isRestart: true,
+        _restartedFrom: existing.id
+      };
+      overlay.remove();
+      openSuppEditor(seed);
+    };
+  }
 
   document.getElementById('sf-save').onclick = async () => {
     suppRecordActivity();
@@ -1233,7 +1294,7 @@ function openSuppEditor(idEncoded) {
     } catch (e) {
       alert('Save failed: ' + e.message);
       saveBtn.disabled = false;
-      saveBtn.textContent = isNew ? '+ Add' : 'Save';
+      saveBtn.textContent = isRestart ? '↻ Restart' : (isNew ? '+ Add' : 'Save');
     }
   };
 
