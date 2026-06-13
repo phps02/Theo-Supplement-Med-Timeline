@@ -56,22 +56,22 @@
   @media (max-width: 640px) {
     .care-hub-back { top: 8px; right: 8px; padding: 6px 10px; font-size: 10px; }
   }
-  .hero { max-width: 1300px; margin: 0 auto; padding: 32px 32px 8px; }
-  .hero-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.25em; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 6px; }
-  .hero-title { font-family: 'Fraunces', serif; font-size: clamp(26px, 4vw, 38px); font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .hero { max-width: 1300px; margin: 0 auto; padding: 16px 32px 2px; }
+  .hero-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.25em; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 3px; }
+  .hero-title { font-family: 'Fraunces', serif; font-size: clamp(22px, 3vw, 30px); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; margin-bottom: 3px; }
   .hero-title em { font-style: italic; color: var(--accent); font-weight: 500; }
   .hero-sub { font-size: 14px; color: var(--ink-muted); max-width: none; }
 
-  .stat-row { max-width: 1300px; margin: 8px auto 0; padding: 0 32px; display: grid; grid-template-columns: 0.85fr 1.15fr 0.9fr 1.1fr; gap: 10px; }
+  .stat-row { max-width: 1300px; margin: 0 auto 0; padding: 0 32px; display: grid; grid-template-columns: 0.85fr 1.15fr 0.9fr 1.1fr; gap: 8px; }
   @media (max-width: 800px) { .stat-row { grid-template-columns: 1fr 1fr; } }
-  .stat-card { background: var(--paper); border: 1px solid var(--line); padding: 10px 14px; border-radius: 6px; position: relative; }
+  .stat-card { background: var(--paper); border: 1px solid var(--line); padding: 6px 12px; border-radius: 6px; position: relative; }
   .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--accent); }
   .stat-card:nth-child(2)::before { background: var(--moss); }
   .stat-card:nth-child(3)::before { background: var(--slate); }
   .stat-card:nth-child(4)::before { background: var(--gold); }
-  .stat-card-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.15em; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 4px; }
-  .stat-card-val { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; line-height: 1; }
-  .stat-card-meta { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+  .stat-card-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.15em; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 2px; }
+  .stat-card-val { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; line-height: 1; }
+  .stat-card-meta { font-size: 10px; color: var(--ink-muted); margin-top: 1px; }
 
   .filter-group {
     max-width: 1300px; margin: 14px auto 0; padding: 0 32px;
@@ -159,13 +159,13 @@
   }
 
   .insights {
-    max-width: 1300px; margin: 24px auto 0; padding: 0 32px;
-    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    max-width: 1300px; margin: 14px auto 0; padding: 0 32px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
   }
   @media (max-width: 800px) { .insights { grid-template-columns: 1fr; } }
-  .insight-card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; }
-  .insight-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 8px; }
-  .insight-body { font-size: 13px; color: var(--ink-soft); line-height: 1.55; }
+  .insight-card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+  .insight-title { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 5px; }
+  .insight-body { font-size: 12px; color: var(--ink-soft); line-height: 1.4; }
   .insight-body strong { color: var(--ink); }
 
   .footer-meta {
@@ -305,9 +305,6 @@
   <div class="hero-eyebrow">Pattern View · Live · Editable</div>
   <h1 class="hero-title">What's <em>working</em>?</h1>
   <p class="hero-sub">Severity-weighted seizure markers overlaid against supplement protocol changes, grouped by pathophysiological target. Quiet stretches and compressed cluster phases auto-detected. Stopped supplements shown as crosshatched bars. Pulls live from the same Google Sheet as the timeline tool.</p>
-  <div style="margin-top: 12px; text-align: right;">
-    <button id="export-pdf-btn" onclick="exportTimelinePDF()" style="padding: 7px 14px; font-size: 12px; background: var(--paper); color: var(--ink-muted); border: 1px solid var(--line); border-radius: 5px; cursor: pointer; font-family: inherit; font-weight: 500;">📄 Export PDF</button>
-  </div>
 </header>
 
 <section class="stat-row" id="stat-row">
@@ -338,6 +335,7 @@
   <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All <span class="filter-count" id="cnt-all"></span></button>
   <button class="filter-btn" data-filter="active" onclick="setFilter('active')">Active <span class="filter-count" id="cnt-active"></span></button>
   <button class="filter-btn" data-filter="stopped" onclick="setFilter('stopped')">Stopped <span class="filter-count" id="cnt-stopped"></span></button>
+  <button id="export-pdf-btn" onclick="exportTimelinePDF()" style="margin-left: auto; padding: 6px 12px; font-size: 11px; background: var(--paper); color: var(--ink-muted); border: 1px solid var(--line); border-radius: 5px; cursor: pointer; font-family: inherit; font-weight: 500;">📄 Export PDF</button>
 </section>
 
 <section class="chart-shell" id="chart-section">
@@ -810,25 +808,25 @@ function renderTimelineSVG(phases) {
     svg += '<rect x="' + x1 + '" y="' + (LAYOUT.marginTop - 8) + '" width="' + (x2 - x1) + '" height="' + (chartBottom - LAYOUT.marginTop + 16) + '" fill="var(--quiet)" opacity="0.07"/>';
     const labelX = (x1 + x2) / 2;
     const label = p.current ? p.days + 'd quiet (current)' : p.days + 'd quiet';
-    svg += '<text x="' + labelX + '" y="' + (LAYOUT.marginTop - 14) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="var(--quiet)" letter-spacing="0.5">' + label + '</text>';
+    svg += '<text x="' + labelX + '" y="' + (LAYOUT.marginTop - 14) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--quiet)" letter-spacing="0.5">' + label + '</text>';
   });
   phases.compressed.forEach(p => {
     const x1 = dateToX(p.start), x2 = dateToX(p.end);
     svg += '<rect x="' + x1 + '" y="' + (LAYOUT.marginTop - 8) + '" width="' + (x2 - x1) + '" height="' + (chartBottom - LAYOUT.marginTop + 16) + '" fill="var(--compressed)" opacity="0.05"/>';
     const labelX = (x1 + x2) / 2;
-    svg += '<text x="' + labelX + '" y="' + (LAYOUT.marginTop - 14) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="var(--compressed)" letter-spacing="0.5">compressed (' + p.clusters + ' clusters · ~' + p.avgGap + 'd avg)</text>';
+    svg += '<text x="' + labelX + '" y="' + (LAYOUT.marginTop - 14) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--compressed)" letter-spacing="0.5">compressed (' + p.clusters + ' clusters · ~' + p.avgGap + 'd avg)</text>';
   });
 
   for (let i = 0; i < CLUSTERS.length; i++) {
     const cx = dateToX(CLUSTERS[i].start);
     const gapText = (i === 0) ? '—' : daysBetween(CLUSTERS[i-1].end, CLUSTERS[i].start) + 'd';
-    svg += '<text x="' + cx + '" y="36" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="var(--ink-muted)" letter-spacing="0.5">' + gapText + '</text>';
+    svg += '<text x="' + cx + '" y="36" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--ink-muted)" letter-spacing="0.5">' + gapText + '</text>';
   }
   if (CLUSTERS.length) {
     const lastEnd = CLUSTERS[CLUSTERS.length - 1].end;
     const since = daysBetween(lastEnd, new Date().toISOString());
     const labelX = (dateToX(lastEnd) + dateToX(todayISO())) / 2;
-    svg += '<text x="' + labelX + '" y="36" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="var(--quiet)" font-weight="600" letter-spacing="0.5">' + since + 'd so far</text>';
+    svg += '<text x="' + labelX + '" y="36" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--quiet)" font-weight="600" letter-spacing="0.5">' + since + 'd so far</text>';
   }
 
   visibleGroups.forEach(groupName => {
@@ -837,7 +835,7 @@ function renderTimelineSVG(phases) {
     const target = GROUP_TARGETS[groupName] || '';
 
     svg += '<g><title>' + escapeHtml(target) + '</title></g>';
-    labelsSvg += '<g><title>' + escapeHtml(target) + '</title><text x="' + (LAYOUT.marginLeft - 8) + '" y="' + (y + 11) + '" text-anchor="end" font-family="Fraunces, serif" font-size="13" font-weight="600" fill="var(--ink)">' + escapeHtml(groupName) + '</text></g>';
+    labelsSvg += '<g><title>' + escapeHtml(target) + '</title><text x="' + (LAYOUT.marginLeft - 8) + '" y="' + (y + 11) + '" text-anchor="end" font-family="Fraunces, serif" font-size="15" font-weight="600" fill="var(--ink)">' + escapeHtml(groupName) + '</text></g>';
 
     rows.forEach(row => {
       row.segments.forEach(supp => {
@@ -854,11 +852,11 @@ function renderTimelineSVG(phases) {
         const labelText = supp.name + (supp.dose ? ' · ' + supp.dose : '');
         const approxLabelW = labelText.length * 5.4;
         if (w >= approxLabelW + 8) {
-          svg += '<text x="' + (startX + 5) + '" y="' + (y + 11) + '" font-family="Inter, sans-serif" font-size="10" fill="' + textColor + '" pointer-events="none">' + escapeHtml(labelText) + '</text>';
+          svg += '<text x="' + (startX + 5) + '" y="' + (y + 11) + '" font-family="Inter, sans-serif" font-size="12" fill="' + textColor + '" pointer-events="none">' + escapeHtml(labelText) + '</text>';
         } else if (endX + approxLabelW + 8 < LAYOUT.width - LAYOUT.marginRight) {
-          svg += '<text x="' + (endX + 5) + '" y="' + (y + 11) + '" font-family="Inter, sans-serif" font-size="10" fill="var(--ink-muted)" pointer-events="none">' + escapeHtml(labelText) + '</text>';
+          svg += '<text x="' + (endX + 5) + '" y="' + (y + 11) + '" font-family="Inter, sans-serif" font-size="12" fill="var(--ink-muted)" pointer-events="none">' + escapeHtml(labelText) + '</text>';
         } else {
-          svg += '<text x="' + (startX - 5) + '" y="' + (y + 11) + '" text-anchor="end" font-family="Inter, sans-serif" font-size="10" fill="var(--ink-muted)" pointer-events="none">' + escapeHtml(labelText) + ' →</text>';
+          svg += '<text x="' + (startX - 5) + '" y="' + (y + 11) + '" text-anchor="end" font-family="Inter, sans-serif" font-size="12" fill="var(--ink-muted)" pointer-events="none">' + escapeHtml(labelText) + ' →</text>';
         }
       });
       y += LAYOUT.rowH + LAYOUT.rowGap;
@@ -872,7 +870,7 @@ function renderTimelineSVG(phases) {
     svg += '<line x1="' + cx + '" y1="' + (LAYOUT.marginTop - 6) + '" x2="' + cx + '" y2="' + (chartBottom + 4) + '" stroke="var(--ev-cl)" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.55"/>';
     svg += '<circle class="cluster-marker" cx="' + cx + '" cy="' + (LAYOUT.marginTop - 18) + '" r="' + r + '" fill="var(--ev-cl)" data-cluster="' + i + '"/>';
     if (c.events.length > 1) {
-      svg += '<text x="' + cx + '" y="' + (LAYOUT.marginTop - 14) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-weight="600" fill="#fff" pointer-events="none">' + c.events.length + '</text>';
+      svg += '<text x="' + cx + '" y="' + (LAYOUT.marginTop - 14) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#fff" pointer-events="none">' + c.events.length + '</text>';
     }
   });
 
@@ -889,7 +887,7 @@ function renderTimelineSVG(phases) {
   while (cursor <= t1) {
     const x = dateToX(cursor.toISOString().slice(0, 10));
     svg += '<line x1="' + x + '" y1="' + (axisY - 4) + '" x2="' + x + '" y2="' + (axisY + 4) + '" stroke="var(--line)" stroke-width="0.5"/>';
-    svg += '<text x="' + x + '" y="' + (axisY + 16) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="var(--ink-muted)">' + months[cursor.getMonth()] + '</text>';
+    svg += '<text x="' + x + '" y="' + (axisY + 16) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--ink-muted)">' + months[cursor.getMonth()] + '</text>';
     if (cursor.getFullYear() !== prevYear) {
       svg += '<text x="' + x + '" y="' + (axisY + 30) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="var(--ink-muted)" opacity="0.6">' + cursor.getFullYear() + '</text>';
       prevYear = cursor.getFullYear();
@@ -1327,8 +1325,10 @@ function exportTimelinePDF() {
     return;
   }
 
-  // Sections to include in the export — keep in this order.
-  const sectionIds = ['stat-row', 'chart-section', 'insights'];
+  // Sections to include in the export. Order matters: stats + insights fill
+  // page 1; the timeline is last and gets a forced page break onto its own
+  // landscape page (see #chart-section print rule) so it can print large.
+  const sectionIds = ['stat-row', 'insights', 'chart-section'];
 
   // Collect <style> blocks and font links from the live page so the cloned
   // content keeps its typography and colors.
@@ -1370,12 +1370,19 @@ function exportTimelinePDF() {
     labelsNaturalW = labelsSvg.clientWidth || labelsSvg.getBoundingClientRect().width || 170;
   }
 
-  const PAGE_W = 960;   // available content width on landscape page
-  const PAGE_H = 430;   // available chart height after hero+stats+insights
+  const PAGE_W = 966;   // full content width inside body padding (landscape letter @ 0.3in margins)
+  // The timeline gets its OWN landscape page (see page-break rule + section
+  // order below), so it can use nearly the full page height. Usable height on
+  // an 8.5in-tall sheet @ 0.3in margins is ~750px; subtract the chart-card
+  // chrome (title/sub/nrc ~70px) and the legend (~28px).
+  const PAGE_H = 652;   // height budget for the timeline on its dedicated page
   const LABEL_W = Math.min(150, labelsNaturalW); // labels take fixed left column
   const CHART_W_AVAIL = PAGE_W - LABEL_W - 20;   // 20 = gap
 
-  // Two constraint ratios — use the smaller so chart fits both dimensions
+  // Scale to fill the WIDTH, but never taller than the dedicated page (a single
+  // SVG can't break across pages) and never upscale past natural size. With a
+  // full page to itself the height budget is large enough that width usually
+  // becomes the binding constraint — so the chart fills the page side to side.
   const scaleByW = CHART_W_AVAIL / svgNaturalW;
   const scaleByH = PAGE_H / svgNaturalH;
   const scale = Math.min(scaleByW, scaleByH, 1); // never upscale
@@ -1385,8 +1392,6 @@ function exportTimelinePDF() {
   const FINAL_CHART_H = Math.round(svgNaturalH * scale);
   const FINAL_LABELS_W = Math.round(LABEL_W);
   const TOTAL_WRAP_W = FINAL_CHART_W + FINAL_LABELS_W + 20;
-
-  const PRINT_WIDTH = 1000;
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Theo — Supplement Timeline (${today})</title>
@@ -1409,9 +1414,9 @@ ${styleNodes}
   /* Fixed-width print page — every child layout is measured against this. */
   body {
     padding: 12px 16px !important;
-    width: ${PRINT_WIDTH}px !important;
-    max-width: ${PRINT_WIDTH}px !important;
-    margin: 0 auto !important;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
     background: #fff !important;
     font-size: 12px !important;
   }
@@ -1466,7 +1471,7 @@ ${styleNodes}
     display: flex !important;
     align-items: flex-start !important;
     line-height: 1.2 !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
   }
   .tl-labels {
     position: static !important;
@@ -1515,12 +1520,22 @@ ${styleNodes}
   .insights h3, .insights .label { font-size: 9px !important; margin-bottom: 3px !important; }
 
   @media print {
-    @page { size: landscape; margin: 0.25in 0.3in; }
+    @page { size: 11in 8.5in; margin: 0.3in; }
     html, body { height: auto !important; }
-    body { width: ${PRINT_WIDTH}px !important; }
-    /* Do NOT force break-inside on chart-card — let it fit naturally.
-       Only avoid splitting individual stat-cards or insight cards. */
+    body { width: auto !important; max-width: none !important; margin: 0 !important; }
+    /* Keep individual stat-cards and insight cards from splitting. */
     .stat-card, .insights > * {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+    }
+    /* The timeline prints on its own landscape page so it can be large and
+       fill the width. A single SVG can't break across pages, so keep the
+       whole chart block together. */
+    #chart-section {
+      break-before: page !important;
+      page-break-before: always !important;
+    }
+    .chart-card, .tl-wrap, .chart-shell {
       break-inside: avoid !important;
       page-break-inside: avoid !important;
     }
